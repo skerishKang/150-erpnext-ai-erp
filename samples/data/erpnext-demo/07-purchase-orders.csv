@@ -1,0 +1,4 @@
+Purchase Order No,Supplier,Transaction Date,Schedule Date,Item Code,Qty,Rate
+PO-2026-001,Korea Steel Distribution,2026-05-15,2026-05-22,STEEL-BEAM-100,600,120000
+PO-2026-002,Dae gu Electronics,2026-05-16,2026-05-30,ELEC-COMP-A,120,200000
+PO-2026-003,Sejong Packaging Solutions,2026-05-17,2026-05-24,CONCRETE-50KG,500,20000

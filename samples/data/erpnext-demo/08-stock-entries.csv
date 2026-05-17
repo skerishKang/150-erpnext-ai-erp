@@ -1,0 +1,6 @@
+Stock Entry No,Stock Entry Type,Posting Date,Item Code,Qty,Source Warehouse,Target Warehouse
+STE-2026-001,Material Receipt,2026-05-19,STEEL-BEAM-100,600,,Main Warehouse
+STE-2026-002,Material Issue,2026-05-20,STEEL-BEAM-100,500,Main Warehouse,
+STE-2026-003,Material Receipt,2026-05-20,ELEC-COMP-A,120,,Main Warehouse
+STE-2026-004,Material Transfer,2026-05-21,ELEC-COMP-A,100,Main Warehouse,Busan Distribution Center
+STE-2026-005,Material Receipt,2026-05-18,WOOD-PANEL-1224,100,,Main Warehouse

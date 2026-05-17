@@ -1,0 +1,5 @@
+Delivery Note No,Customer,Posting Date,Item Code,Qty,Warehouse
+DN-2026-001,Seoul Build Corp,2026-05-20,STEEL-BEAM-100,500,Main Warehouse
+DN-2026-002,Busan Tech Solutions,2026-05-21,ELEC-COMP-A,100,Busan Distribution Center
+DN-2026-003,Gwangju Design Studio,2026-05-22,WOOD-PANEL-1224,80,Main Warehouse
+DN-2026-003,Gwangju Design Studio,2026-05-22,LED-FIXTURE-01,30,Main Warehouse
