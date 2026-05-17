@@ -1,0 +1,2 @@
+Item Code,Item Name,Item Group,Stock UOM,Standard Rate,Is Stock Item,Is Sales Item,Is Purchase Item,Description
+TEST-ITEM-01,Test Item Alpha,Raw Materials,Piece,50000,Yes,Yes,Yes,Test item for import validation
