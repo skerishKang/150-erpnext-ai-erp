@@ -38,6 +38,8 @@ Padiem AI ERP is **not** a chatbot bolted onto ERP. It is an ERP system where AI
 
 Every AI output that could affect business decisions requires **explicit human approval** before becoming an ERP record. AI drafts; human decides.
 
+Risk alerts are rule-based ERP status summaries, not autonomous business judgment.
+
 ---
 
 ## Feature 1: CEO Daily Briefing
@@ -607,7 +609,7 @@ Period: 2026-05-01 ~ 2026-05-31
 
 ### AI Provider
 
-- Initial candidate: DeepSeek via OpenAI-compatible provider
+- Initial candidate: DeepSeek via OpenGo-style/OpenAI-compatible provider
 - Provider layer must be configurable and vendor-agnostic
 - Future providers: Mistral, OpenAI, Claude, Gemini, local models, Ollama-compatible models
 - No provider-specific API key or credential should be committed
