@@ -75,7 +75,7 @@ Date: 2026-05-18 (Monday)
 
 [Financial Summary]
 - Today's expected receivables: 75,000,000 KRW (Seoul Build Corp)
-- Overdue invoices: 2 (total: 45,000,000 KRW)
+- Overdue invoices: 1 (total: 45,000,000 KRW)
 - Payments received this week: 38,800,000 KRW
 
 [Operations Alert]
@@ -89,7 +89,7 @@ Date: 2026-05-18 (Monday)
 - Review: Gwangju Design Studio delivery approaching deadline
 
 [AI Note]
-Seoul Build Corp has 45M KRW outstanding for 27 days. Consider sending a payment reminder.
+Seoul Build Corp has 45M KRW outstanding for 28 days (due 04/20). Consider sending a payment reminder.
 ```
 
 ### Screen Location
@@ -117,7 +117,7 @@ Seoul Build Corp has 45M KRW outstanding for 27 days. Consider sending a payment
 **Demo flow**:
 1. CEO logs into ERPNext
 2. Homepage shows "CEO Daily Briefing" card
-3. Card displays: "2 overdue invoices totaling 45M KRW. 1 delivery due this week."
+3. Card displays: "1 overdue invoice totaling 45M KRW. 1 delivery due this week."
 4. CEO clicks "View Details" → expands to full breakdown
 5. CEO clicks "Draft Reminder" → AI generates email draft for Seoul Build Corp
 6. CEO reviews draft, edits, and clicks "Send" manually
@@ -140,9 +140,9 @@ Korean SME employees are not ERP power users. They don't know DocType names, fie
 |---------|---------------|
 | Customer | "서울 거래처 목록 보여줘" |
 | Supplier | "철강 공급업체 연락처 알려줘" |
-| Item | "재고 부족한 품목알려줘" |
+| Item | "재고 부족한 품목을 알려줘" |
 | Sales Order | "이번 주 납기 예정인 주문 정리해줘" |
-| Purchase Order | "미입고 구매주문列表" |
+| Purchase Order | "아직 입고되지 않은 구매주문을 보여줘" |
 | Stock Entry | "어제 창고 반입된 품목 보여줘" |
 | Sales Invoice | "미수금 큰 거래처 순으로 정리해줘" |
 | Payment Entry | "이번 달 입금 내역 보여줘" |
@@ -313,12 +313,12 @@ As of: 2026-05-18
 [Overview]
 Total Outstanding: 70,000,000 KRW
 Invoices: 2
-Overdue (>30 days): 0
+Overdue (>30 days): 1 (45,000,000 KRW, 28 days overdue)
 
 [By Customer]
 1. Seoul Build Corp: 45,000,000 KRW
-   - SINV-2026-001: 45M (due 06/20, 30 days terms)
-   - Last payment: 30M on 05/25 (partial)
+   - SINV-2026-001: 45M (due 04/20, 30 days terms, 28 days overdue)
+   - Last payment: 30M on 04/25 (partial)
    - Recommendation: Send payment reminder
 
 2. Busan Tech Solutions: 25,000,000 KRW
@@ -392,7 +392,7 @@ Warehouse managers and sales teams need to know: What's in stock? What's shippin
   - "Steel Beam 재고 현황"
   - "이번 주 출하 예정 건"
   - "부산 창고 재고 보여줘"
-  - "재고 부족한 품목알려줘"
+  - "재고 부족한 품목을 알려줘"
 
 ### Output
 
@@ -464,15 +464,20 @@ Accountant-ready Document Package Summary (회계사 자료 정리 요약)
 
 At month-end, Korean SMEs need to send invoices, receipts, and supporting documents to their accountant or tax advisor. This typically involves manually collecting PDFs, spreadsheets, and notes. This feature automatically summarizes what's needed and prepares a checklist.
 
-### ERPNext Data Used
+### ERPNext Data Used (v1)
 
 | DocType | Fields |
 |---------|--------|
 | Sales Invoice | posting_date, customer, grand_total, status, due_date |
 | Purchase Invoice | posting_date, supplier, grand_total, status |
 | Payment Entry | posting_date, paid_amount, party, mode_of_payment |
-| Journal Entry | posting_date, accounts, total_debit, total_credit |
 | Stock Entry | posting_date, item_code, qty, stock_entry_type |
+
+### Future / Optional (Not v1)
+
+| DocType | Fields |
+|---------|--------|
+| Journal Entry | posting_date, accounts, total_debit, total_credit |
 | Expense Claim | posting_date, employee, total_claimed_amount |
 
 ### Input
@@ -602,9 +607,10 @@ Period: 2026-05-01 ~ 2026-05-31
 
 ### AI Provider
 
-- LLM provider: Configurable (OpenAI, Anthropic, local models)
-- Default: OpenAI GPT-4 or equivalent
-- Fallback: Local model for offline/sensitive data
+- Initial candidate: DeepSeek via OpenAI-compatible provider
+- Provider layer must be configurable and vendor-agnostic
+- Future providers: Mistral, OpenAI, Claude, Gemini, local models, Ollama-compatible models
+- No provider-specific API key or credential should be committed
 
 ### Data Privacy
 
