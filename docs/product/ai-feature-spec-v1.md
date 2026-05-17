@@ -140,7 +140,7 @@ Korean SME employees are not ERP power users. They don't know DocType names, fie
 |---------|---------------|
 | Customer | "서울 거래처 목록 보여줘" |
 | Supplier | "철강 공급업체 연락처 알려줘" |
-| Item | "재고 부족한 품목有哪些" |
+| Item | "재고 부족한 품목알려줘" |
 | Sales Order | "이번 주 납기 예정인 주문 정리해줘" |
 | Purchase Order | "미입고 구매주문列表" |
 | Stock Entry | "어제 창고 반입된 품목 보여줘" |
@@ -392,7 +392,7 @@ Warehouse managers and sales teams need to know: What's in stock? What's shippin
   - "Steel Beam 재고 현황"
   - "이번 주 출하 예정 건"
   - "부산 창고 재고 보여줘"
-  - "재고 부족한 품목有哪些"
+  - "재고 부족한 품목알려줘"
 
 ### Output
 
