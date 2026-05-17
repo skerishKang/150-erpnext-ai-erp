@@ -9,7 +9,7 @@ Phase 0 established the repository foundation and agent documentation system.
 ## Completed Work
 
 ### Repository Setup
-- GitHub repository initialized at `skerishKang/Padiem-AI-ERP`
+- GitHub repository initialized at `skerishKang/150-erpnext-ai-erp`
 - `.gitignore` configured for Frappe/ERPNext development
 - Initial commit with base structure
 
@@ -23,7 +23,7 @@ Phase 0 established the repository foundation and agent documentation system.
   - `04-operations/` — Git rules, commit policy, local development rules, test policy
   - `05-prompts/` — CTO handoff prompt, ERPNext installation agent prompt, vibe coding rules
 
-### Architecture Decision Records (Phase 0.5 — this sprint)
+### Architecture Decision Records (Phase 0.5)
 - `docs/decisions/` — ADR-0001 through ADR-0005 covering foundation strategy
 
 ### Architecture Documentation (Phase 0.5)
@@ -32,7 +32,7 @@ Phase 0 established the repository foundation and agent documentation system.
 ### Sales Documentation (Phase 0.5)
 - `docs/sales/` — Sales positioning, first customer profile, pilot offer, customer proposal outline
 
-### Implementation Documentation (Phase 0.5 — this file)
+### Implementation Documentation (Phase 0.5)
 - `docs/implementation/00-execution-roadmap.md` — Full phase plan
 - `docs/implementation/01-sprint-0-repository-and-docs.md` — This summary
 - `docs/implementation/02-sprint-1-erpnext-local-installation.md` — Next sprint plan

@@ -57,3 +57,7 @@ Phase 6 (customer pilot)
 | M4 | Phase 4 | "Full demo: voice → quotation → CEO briefing" |
 | M5 | Phase 5 | "System running on Oracle Cloud, accessible via browser" |
 | M6 | Phase 6 | "First pilot customer using the system" |
+
+## Current Position
+
+We are at the end of **Phase 0**. Phase 1 (ERPNext installation) is next.
