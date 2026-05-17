@@ -64,68 +64,60 @@ core를 수정하면 나중에 되돌리기 어렵습니다. Custom App으로 �
 
 ## 3. Custom App 기본 구조
 
-### 앱 이름
+### 이름 구분
 
-**`padiem_ai`**
+| 구분 | 이름 | 설명 |
+|------|------|------|
+| Frappe app name | `padiem_ai` | 코드, 디렉토리, API 경로에서 사용 |
+| Product name | Padiem AI ERP | 사용자-facing 이름, 마케팅, 문서에서 사용 |
+
+문서 전체에서 앱 이름은 `padiem_ai`, 제품명은 Padiem AI ERP로 통일합니다.
 
 ### 디렉토리 구조
 
 ```
-padiem_ai/
-├── __init__.py
-├── hooks.py                    # Frappe hooks
-├── setup.py                    # 패키지 설정
-├── requirements.txt            # Python 의존성
-│
-├── padiem_ai/
-│   ├── __init__.py
-│   │
-│   ├── api/                    # Backend API endpoints
-│   │   ├── __init__.py
-│   │   ├── briefing.py         # CEO Daily Briefing
-│   │   ├── query.py            # Natural-language ERP Query
-│   │   ├── quotation.py        # Quotation Draft Assistant
-│   │   ├── receivables.py      # Receivables Summary
-│   │   ├── delivery_stock.py   # Delivery & Stock Summary
-│   │   └── accountant.py       # Accountant Package Status
-│   │
-│   ├── ai/                     # AI provider abstraction
-│   │   ├── __init__.py
-│   │   ├── base.py             # Abstract base class
-│   │   ├── deepseek.py         # DeepSeek adapter
-│   │   ├── openai.py           # OpenAI adapter
-│   │   ├── claude.py           # Claude adapter
-│   │   └── mock.py             # Mock adapter (개발/테스트용)
-│   │
-│   ├── prompts/                # Prompt templates
-│   │   ├── briefing.json
-│   │   ├── query.json
-│   │   ├── quotation_draft.json
-│   │   └── receivables.json
-│   │
-│   ├── data/                   # ERP data retrieval
-│   │   ├── __init__.py
-│   │   ├── sales.py            # Sales Invoice, Sales Order
-│   │   ├── purchase.py         # Purchase Order, Purchase Invoice
-│   │   ├── inventory.py        # Stock Entry, Bin
-│   │   └── master.py           # Customer, Supplier, Item
-│   │
-│   ├── audit/                  # Audit logging
-│   │   ├── __init__.py
-│   │   └── log.py
-│   │
-│   └── dashboard/              # CEO dashboard
-│       ├── __init__.py
-│       └── page.py
-│
-├── padiem_ai/
-│   └── page/                   # Custom pages
-│       └── padiem_dashboard/
-│           ├── __init__.py
-│           └── padiem_dashboard.js
-│
-└── padiem_ai/
-    └── public/                 # Frontend assets
+padiem_ai/                          ← Frappe app root
+├── hooks.py                        # Frappe hooks
+├── setup.py                        # 패키지 설정
+├── requirements.txt                # Python 의존성
+└── padiem_ai/                      ← Python package
+    ├── __init__.py
+    ├── api/                        # Backend API endpoints
+    │   ├── __init__.py
+    │   ├── briefing.py             # CEO Daily Briefing
+    │   ├── query.py                # Natural-language ERP Query
+    │   ├── quotation.py            # Quotation Draft Assistant
+    │   ├── receivables.py          # Receivables Summary
+    │   ├── delivery_stock.py       # Delivery & Stock Summary
+    │   └── accountant.py           # Accountant Package Status
+    ├── ai/                         # AI provider abstraction
+    │   ├── __init__.py
+    │   ├── base.py                 # Abstract base class
+    │   ├── deepseek.py             # DeepSeek adapter
+    │   ├── openai.py               # OpenAI adapter
+    │   ├── claude.py               # Claude adapter
+    │   └── mock.py                 # Mock adapter (개발/테스트용)
+    ├── prompts/                    # AI prompt templates
+    │   ├── briefing.json
+    │   ├── query.json
+    │   ├── quotation_draft.json
+    │   └── receivables.json
+    ├── data/                       # ERP data retrieval
+    │   ├── __init__.py
+    │   ├── sales.py
+    │   ├── purchase.py
+    │   ├── inventory.py
+    │   └── master.py
+    ├── audit/                      # Audit logging
+    │   ├── __init__.py
+    │   └── log.py
+    ├── dashboard/                  # CEO dashboard logic
+    │   ├── __init__.py
+    │   └── page.py
+    ├── page/                       # Frappe Custom Page definitions
+    │   └── padiem_dashboard/
+    │       └── padiem_dashboard.js
+    └── public/                     # Frontend assets
         ├── js/
         │   └── padiem_dashboard.js
         └── css/
@@ -192,7 +184,7 @@ Phase 6: Audit/logging/permission hardening
 | 원칙 | 설명 |
 |------|------|
 | **ORM 사용** | `frappe.get_all`, `frappe.get_doc` 등 Frappe ORM 사용 |
-| **직접 DB 쿼리 최소화** | `frappe.db.sql`은 꼭 필요한 경우에만 사용 |
+| **직접 DB 쿼리 기본 금지** | `frappe.db.sql` 사용 금지. 예외적으로 성능상 필요한 경우 CTO 승인 후 사용 |
 | **권한 우회 금지** | `ignore_permissions=True` 사용 금지 |
 | **Role-based permission** | ERPNext Role Permission Manager 준수 |
 | **데이터 제한** | AI가 볼 수 있는 데이터는 사용자가 볼 수 있는 데이터로 제한 |
@@ -249,7 +241,7 @@ def get_ceo_briefing():
 |------|---------------|-------------|---------------|------|----------|
 | **CEO Daily Briefing** | Sales Invoice, Sales Order, Payment Entry, Stock Entry | `/api/method/padiem_ai.api.briefing.get` | Custom Page 상단 카드 | 저장 안 함 | 불필요 (조회만) |
 | **자연어 ERP Query** | 모든 DocType | `/api/method/padiem_ai.api.query.search` | Custom Page 우측 패널 | 저장 안 함 | 불필요 (조회만) |
-| **Quotation Draft** | Customer, Item, Price List | `/api/method/padiem_ai.api.quotation.draft` | Custom Page 하단 입력줄 | **사람이 "저장" 클릭 시** | **필요** |
+| **Quotation Draft** | Customer, Item, Price List | `/api/method/padiem_ai.api.quotation.draft` | Custom Page 하단 입력줄 | **HITL 승인 후 별도 PR에서 검토** | **필요** |
 | **Receivables Summary** | Sales Invoice, Customer | `/api/method/padiem_ai.api.receivables.get` | Custom Page 하단 좌측 카드 | 저장 안 함 | 불필요 (조회만) |
 | **Delivery & Stock** | Sales Order, Delivery Note, Stock Entry, Item, Bin | `/api/method/padiem_ai.api.delivery_stock.get` | Custom Page 하단 중앙 카드 | 저장 안 함 | 불필요 (조회만) |
 | **Accountant Package** | Sales Invoice, Purchase Invoice, Payment Entry, Stock Entry | `/api/method/padiem_ai.api.accountant.get` | Custom Page 하단 우측 카드 | 저장 안 함 | 불필요 (조회만) |
@@ -344,11 +336,13 @@ def get_ceo_briefing():
 
 ### Frappe Custom Page 등록
 
+> **Note**: 아래 코드는 전략 문서용 pseudo-code입니다. 실제 구현 PR에서 Frappe Custom Page 등록 방식으로 검증합니다.
+
 ```python
-# hooks.py
+# hooks.py (concept only)
 app_name = "padiem_ai"
 
-# Custom Page 등록
+# Custom Page 등록 (실제 구현 시 Frappe 방식으로 검증)
 page_info = {
     "padiem-dashboard": {
         "title": "Padiem AI Dashboard",
@@ -450,23 +444,23 @@ v1에서는 Custom Field를 만들지 않습니다. 모든 AI 출력은 화면�
 | **API key 커밋 금지** | API key, secret, password를 코드에 포함하지 않음 |
 | **AI 요청/응답 로그** | 개인정보·거래정보 포함 가능성이 있으므로 설계 필요 |
 | **v1에서는 로그 최소화** | 필수 로그만 기록, 상세 로그는 v2에서 확장 |
-| **고객 데이터 외부 전송** | 설정 가능해야 함, 기본값은 "전송 안 함" |
+| **고객 데이터 외부 전송** | 기본값은 mock/local-safe mode로 시작. 외부 provider 사용은 관리자 설정과 명시적 동의 후 활성화. 외부 전송 시 최소 필요 데이터만 전달 |
 | **Role-based access** | 관리자만 AI provider 설정 가능 |
 | **사용자 권한 준수** | AI가 볼 수 있는 데이터는 사용자가 볼 수 있는 데이터로 제한 |
 
 ### AI API key 관리
 
-```python
-# AI provider API key는 Frappe Site Config에 저장
-# sites/common_site_config.json 또는 sites/frontend/site_config.json
+AI provider credential은 site_config 또는 환경변수에 저장하며, 저장 방식은 배포 환경별로 검토합니다. 문서와 Git에는 절대 기록하지 않습니다.
 
+```python
+# site_config.json 또는 환경변수 (concept only)
 {
     "padiem_ai_provider": "deepseek",
-    "padiem_ai_api_key": "sk-xxx..."  # 실제 key는 여기에
+    "padiem_ai_api_key": "<configured outside git>"
 }
 ```
 
-**중요**: `site_config.json`은 `.gitignore`에 포함되어 있어야 합니다.
+`site_config.json`은 `.gitignore`에 포함되어 있어야 합니다.
 
 ### AI Audit Log (v2 후보)
 
@@ -497,7 +491,7 @@ v1에서는 간단한 로그만 기록합니다. v2에서 AI Audit Log DocType�
 | **자동 승인** | 모든 AI 출력물은 사람 승인 후 실행 |
 | **세무 신고/급여 처리** | v1 범위 외 |
 | **고객별 하드코딩** | 모든 설정은 설정 파일에서 관리 |
-| **직접 DB 쿼리** | Frappe ORM 사용 원칙 |
+| **직접 DB 쿼리** | Frappe ORM 사용 원칙, 직접 쿼리 기본 금지 (CTO 승인 예외) |
 | **권한 우회** | `ignore_permissions=True` 사용 금지 |
 
 ### v1에서 하지 않지만 v2에서 검토할 것
@@ -577,9 +571,9 @@ v1에서는 간단한 로그만 기록합니다. v2에서 AI Audit Log DocType�
 - quotation draft API 구현
 - Customer, Item, Price List 데이터 조회
 - AI가 견적서 초안 생성
-- "ERPNext에 저장" 기능 (사람이 클릭)
+- 사용자는 ERPNext 표준 Quotation 생성 화면에서 검토·수정 후 저장
 
-**결과물**: 견적서 초안 생성 및 저장 가능
+**결과물**: 견적서 초안 생성 가능. 저장 기능은 별도 구현 PR에서 HITL 승인 흐름을 갖춘 뒤 검토
 
 ---
 
