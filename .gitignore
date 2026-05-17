@@ -37,3 +37,6 @@ node_modules/
 
 # OpenClaude
 .openclaude/
+
+# Session cookies
+cookies.txt
