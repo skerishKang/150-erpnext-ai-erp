@@ -3,15 +3,18 @@
 {% block page_content %}
 <div class="ceo-briefing-page" style="max-width: 800px; margin: 0 auto; padding: 20px;">
     <h1>CEO Daily Briefing</h1>
-    <p style="color: #6c757d; font-size: 14px;">
-        Mock CEO Briefing — deterministic formatter. AI provider integration pending.
-    </p>
 
     {% if error %}
     <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin: 16px 0;">
         {{ error }}
     </div>
     {% elif briefing %}
+    <div style="background: #e8f5e9; padding: 12px; border-radius: 4px; margin: 16px 0; font-size: 13px; color: #2e7d32;">
+        Provider: <strong>{{ provider_info.name if provider_info else 'N/A' }}</strong>
+        | Status: <strong>{{ provider_info.status if provider_info else 'N/A' }}</strong>
+        | External call: <strong>{{ 'No' if provider_info and not provider_info.external_call else 'Yes' }}</strong>
+    </div>
+
     <div style="background: #f8f9fa; padding: 16px; border-radius: 4px; margin: 16px 0;">
         <strong>요약:</strong> {{ briefing.summary }}
     </div>
@@ -24,9 +27,9 @@
     {% endfor %}
 
     <div style="margin-top: 24px; padding: 12px; background: #e9ecef; border-radius: 4px; font-size: 12px; color: #6c757d;">
-        생성 시간: {{ briefing.raw_context.get('timestamp', 'N/A') if briefing.raw_context else 'N/A' }}
+        Provider: {{ provider_info.name if provider_info else 'N/A' }} (mock — no external AI call)
         | 데이터 소스: ERPNext (read-only)
-        | AI provider: 미연결
+        | AI provider registry: 연결됨 (mock only)
     </div>
     {% endif %}
 </div>
