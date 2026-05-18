@@ -32,7 +32,7 @@
 | 백업 생성일 | 2026-05-18 07:16:39 |
 | DB 백업 파일 | `20260518_071635-frontend-database.sql.gz` (904.6KB) |
 | 설정 백업 파일 | `20260518_071635-frontend-site_config_backup.json` (149B) |
-| 백업 경로 | VM 내부: `/home/frappe/frappe-bench/sites/frontend/private/backups/` |
+| 백업 경로 | Docker/Frappe site 내부 백업 경로: `/home/frappe/frappe-bench/sites/frontend/private/backups/` |
 | 비고 | 백업 파일은 Git에 커밋하지 않음 |
 
 ### 알려진 CSV 수정 사항
@@ -84,7 +84,7 @@ curl -s http://localhost:8080/desk | head -5
 또는 브라우저에서 http://localhost:8080/desk 접속 확인.
 
 **정상 동작 확인 후**:
-- 로그인: Administrator / admin (비밀번호 변경 필요)
+- Administrator 계정으로 로그인한다. 현재 로컬 기본 비밀번호는 즉시 변경 필요하며 문서에 기록하지 않는다.
 - Desk 진입 확인
 - 이전 데이터(고객, 품목, 견적 등) 보존 여부 확인
 
@@ -152,7 +152,7 @@ curl -s http://localhost:8080/desk | head -5
 - import 성공/실패 기록
 - 발생한 오류 기록
 - 수정한 CSV 필드 기록
-- `docs/implementation/16-demo-data-import-results.md` 생성
+- `docs/implementation/16-demo-data-full-import-log.md` 생성
 
 ---
 
