@@ -66,10 +66,10 @@ Total: 3 files, all using only the CEO briefing context function (and demo count
 
 The function depends on:
 - `get_demo_counts()` (currently in read_only.py)
-- All 8 summary functions (now in read_only_modules/*)
+- All 7 summary functions (now in read_only_modules/*)
 
 If moved to a new `context.py` module:
-- Would need to import all 8 summary functions from their respective modules
+- Would need to import all 7 summary functions from their respective modules
 - Would need to import `get_demo_counts()` (unless also moved)
 - No existing modules import from a hypothetical context.py (only CEO briefing related files import from read_only.py)
 - **Circular import risk: LOW** - No modules currently import from where context.py would be
@@ -107,7 +107,7 @@ If moved to a new `counts.py` module:
 **Reasoning:**
 - Function is 52 lines (lines 51-102) - moderate complexity
 - Acts as the main orchestrator/facade function
-- Currently the ONLY reason external code imports from read_only.py (3 call sites)
+- The main runtime call sites currently depend on `get_ceo_briefing_context()`, with `api/briefing.py` also importing `get_demo_counts()`.
 - Would clarify that read_only.py is purely a re-export facade
 - Would allow true separation: facade (imports only) vs orchestrator (contains logic)
 - **Circular import risk is low** as no modules import from where context.py would live
@@ -133,7 +133,7 @@ If moved to a new `counts.py` module:
 ## Summary
 
 The read_only.py file has successfully been refactored to act as a public compatibility facade:
-- All 8 domain-specific summary functions have been extracted to dedicated modules
+- All 7 domain-specific summary functions have been extracted to dedicated modules
 - Only two orchestrator functions remain: `get_demo_counts()` and `get_ceo_briefing_context()`
 - All public imports continue to work unchanged
 - Module sizes are now well within limits (largest: read_only.py at 102 lines)
