@@ -48,26 +48,102 @@ def test_validation():
         try:
             result = config.validate_deepseek_base_url(url)
             if should_pass:
-                print(f"✓ PASS: {description} -> {result}")
+                print(f"  PASS: {description} -> {result}")
                 passed += 1
             else:
-                print(f"✗ FAIL: {description} should have raised error")
+                print(f"  FAIL: {description} should have raised error")
                 failed += 1
         except ValueError as e:
             if not should_pass:
-                print(f"✓ PASS: {description} -> blocked: {e}")
+                print(f"  PASS: {description} -> blocked: {e}")
                 passed += 1
             else:
-                print(f"✗ FAIL: {description} should have passed but blocked: {e}")
+                print(f"  FAIL: {description} should have passed but blocked: {e}")
                 failed += 1
         except Exception as e:
-            print(f"✗ ERROR: {description} -> {type(e).__name__}: {e}")
+            print(f"  ERROR: {description} -> {type(e).__name__}: {e}")
             failed += 1
 
-    print(f"\nResults: {passed} passed, {failed} failed")
+    print(f"\n  Results: {passed} passed, {failed} failed")
+    return failed == 0
+
+
+def _run_case(url, should_pass, description, passed, failed):
+    """Run a single validation case and update counters."""
+    try:
+        result = config.validate_deepseek_base_url(url)
+        if should_pass:
+            print(f"  PASS: {description} -> {result}")
+            passed += 1
+        else:
+            print(f"  FAIL: {description} should have raised error")
+            failed += 1
+    except ValueError as e:
+        if not should_pass:
+            print(f"  PASS: {description} -> blocked: {e}")
+            passed += 1
+        else:
+            print(f"  FAIL: {description} should have passed but blocked: {e}")
+            failed += 1
+    except Exception as e:
+        print(f"  ERROR: {description} -> {type(e).__name__}: {e}")
+        failed += 1
+    return passed, failed
+
+
+def test_custom_flag_off():
+    """Custom flag OFF: only default host allowed, custom hosts blocked."""
+    print("\n--- Custom flag OFF ---")
+    os.environ.pop("PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL", None)
+
+    cases = [
+        ("https://api.deepseek.com/v1", True, "default host allowed"),
+        ("https://example.com/v1", False, "custom host blocked (flag off)"),
+    ]
+
+    passed, failed = 0, 0
+    for url, should_pass, desc in cases:
+        passed, failed = _run_case(url, should_pass, desc, passed, failed)
+
+    print(f"  Results: {passed} passed, {failed} failed")
+    return failed == 0
+
+
+def test_custom_flag_on():
+    """Custom flag ON: custom hosts allowed, but localhost/private/metadata still blocked."""
+    print("\n--- Custom flag ON ---")
+    os.environ["PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL"] = "true"
+
+    cases = [
+        ("https://example.com/v1", True, "custom host allowed"),
+        ("https://localhost/v1", False, "localhost blocked"),
+        ("https://LOCALHOST/v1", False, "LOCALHOST blocked"),
+        ("https://localhost./v1", False, "localhost. blocked"),
+        ("https://127.0.0.1/v1", False, "127.0.0.1 blocked"),
+        ("https://[::1]/v1", False, "::1 blocked"),
+        ("https://169.254.169.254/v1", False, "metadata IP blocked"),
+        ("https://10.0.0.1/v1", False, "10.x private IP blocked"),
+        ("https://192.168.0.1/v1", False, "192.168.x private IP blocked"),
+        ("https://172.16.0.1/v1", False, "172.16.x private IP blocked"),
+    ]
+
+    passed, failed = 0, 0
+    for url, should_pass, desc in cases:
+        passed, failed = _run_case(url, should_pass, desc, passed, failed)
+
+    # Cleanup
+    os.environ.pop("PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL", None)
+
+    print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
 
 if __name__ == "__main__":
-    success = test_validation()
-    sys.exit(0 if success else 1)
+    s1 = test_validation()
+    s2 = test_custom_flag_off()
+    s3 = test_custom_flag_on()
+
+    all_passed = s1 and s2 and s3
+    print(f"\n{'='*40}")
+    print(f"Overall: {'ALL PASSED' if all_passed else 'SOME FAILED'}")
+    sys.exit(0 if all_passed else 1)

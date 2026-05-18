@@ -278,11 +278,15 @@ def _is_private_or_blocked_ip(host: str) -> bool:
 
 
 def _is_blocked_hostname(host: str) -> bool:
-    """Check if hostname is a blocked string variant."""
+    """Check if hostname is a blocked string variant.
+
+    Normalizes: strip, lower, rstrip(".")
+    Blocked: localhost, localhost., LOCALHOST, LOCALHOST., *.localhost, *.local, 0, ::1
+    """
     if not host:
         return True
 
-    host_lower = host.lower()
+    host_lower = host.strip().lower().rstrip(".")
 
     if host_lower in ("localhost", "0", "127.0.0.1"):
         return True
@@ -352,7 +356,10 @@ def validate_deepseek_base_url(base_url: str) -> str:
     if parsed.port is not None and parsed.port != 443:
         raise ValueError(f"Port {parsed.port} is not allowed. Only port 443 or no port.")
 
-    if _is_private_or_blocked_ip(host) or _is_blocked_hostname(host):
+    # Conservative normalization: strip, lower, remove trailing dot
+    host_norm = host.strip().lower().rstrip(".")
+
+    if _is_private_or_blocked_ip(host_norm) or _is_blocked_hostname(host_norm):
         raise ValueError(f"Blocked host: {host}. Private/localhost/metadata IPs not allowed.")
 
     path = parsed.path.rstrip("/")
@@ -361,14 +368,14 @@ def validate_deepseek_base_url(base_url: str) -> str:
         raise ValueError(f"Path '{parsed.path}' is not allowed. Only /v1 or no path.")
 
     default_host = "api.deepseek.com"
-    if host != default_host:
+    if host_norm != default_host:
         if not _get_env_bool("PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL"):
             raise ValueError(
                 f"Custom host '{host}' requires "
                 f"PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL=true"
             )
 
-    normalized = f"https://{host}/v1"
+    normalized = f"https://{host_norm}/v1"
     return normalized
 
 
