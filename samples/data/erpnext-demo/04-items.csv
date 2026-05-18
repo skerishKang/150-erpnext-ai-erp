@@ -1,11 +1,11 @@
 Item Code,Item Name,Item Group,Stock UOM,Standard Rate,Is Stock Item,Is Sales Item,Is Purchase Item,Description
-STEEL-BEAM-100,Steel Beam 100mm,Raw Materials,Meter,150000,Yes,Yes,Yes,Standard steel beam 100mm width for construction
+STEEL-BEAM-100,Steel Beam 100mm,Raw Material,Meter,150000,Yes,Yes,Yes,Standard steel beam 100mm width for construction
 ELEC-COMP-A,Electronic Component Set A,Components,Set,250000,Yes,Yes,Yes,Basic electronic component set for PCB assembly
 CONCRETE-50KG,Concrete Mix 50kg,Construction Materials,Bag,25000,Yes,Yes,Yes,Ready-mix concrete 50kg bags
-ALUM-SHEET-2MM,Aluminum Sheet 2mm,Raw Materials,Sheet,85000,Yes,Yes,Yes,Aluminum sheet 2mm thickness standard size
+ALUM-SHEET-2MM,Aluminum Sheet 2mm,Raw Material,Sheet,85000,Yes,Yes,Yes,Aluminum sheet 2mm thickness standard size
 SMART-SENSOR-01,Smart Sensor Module,Electronics,Piece,450000,Yes,Yes,Yes,IoT sensor module for smart farming
 WOOD-PANEL-1224,Wood Panel 1200x2400,Construction Materials,Piece,65000,Yes,Yes,Yes,Plywood panel 1200x2400mm 18mm thick
 LED-FIXTURE-01,LED Light Fixture,Electrical,Piece,120000,Yes,Yes,Yes,Commercial LED light fixture 60W
-SS-PIPE-50MM,Stainless Steel Pipe 50mm,Raw Materials,Meter,95000,Yes,Yes,Yes,Stainless steel pipe 50mm diameter
+SS-PIPE-50MM,Stainless Steel Pipe 50mm,Raw Material,Meter,95000,Yes,Yes,Yes,Stainless steel pipe 50mm diameter
 PVC-CABLE-2.5SQ,PVC Cable 2.5sq,Electrical,Meter,3500,Yes,Yes,Yes,PVC insulated cable 2.5 sq mm
 SERVICE-INSTALL,Installation Service,Services,Hour,150000,No,Yes,No,Professional installation service per hour
