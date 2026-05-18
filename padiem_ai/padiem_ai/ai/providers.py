@@ -101,8 +101,19 @@ class DeepSeekProvider(BaseAIProvider):
             )
 
     def _ensure_allowed(self) -> None:
-        """Verify config guard allows DeepSeek usage. Raises if not."""
-        from padiem_ai.ai.config import assert_provider_allowed
+        """Verify config guard allows DeepSeek usage. Raises if not.
+
+        Checks:
+        1. Master switch: PA_DIEM_ENABLE_EXTERNAL_AI
+        2. Provider flag: PA_DIEM_DEEPSEEK_ENABLED
+        3. Credential: PA_DIEM_DEEPSEEK_API_KEY
+        """
+        from padiem_ai.ai.config import assert_provider_allowed, is_external_ai_enabled
+        if not is_external_ai_enabled():
+            raise RuntimeError(
+                "External AI calls are disabled. "
+                "Set PA_DIEM_ENABLE_EXTERNAL_AI=true to allow external AI."
+            )
         assert_provider_allowed("deepseek")
 
     def _extract_text(self, response: dict) -> str:
@@ -152,19 +163,32 @@ class DeepSeekProvider(BaseAIProvider):
         return self.generate_text(prompt, context)
 
     def health_check(self) -> dict:
-        """Check DeepSeek provider status. No external call unless fully configured."""
-        cfg = self._get_config()
-        if not cfg["api_key_present"]:
+        """Check DeepSeek provider status without making an external API call."""
+        from padiem_ai.ai.config import get_provider_config_status
+
+        status_info = get_provider_config_status("deepseek")
+
+        config_info = {
+            "enabled": status_info.get("enabled", False),
+            "external_call_allowed": status_info.get("external_call_allowed", False),
+            "credentials_present": status_info.get("credentials_present", False),
+        }
+
+        if status_info["status"] != "ok":
             return {
-                "status": "disabled_missing_config",
+                "status": status_info["status"],
                 "provider": "deepseek",
-                "message": "DeepSeek API key not configured (PA_DIEM_DEEPSEEK_API_KEY)",
+                "external_call": False,
+                "message": "DeepSeek provider is not ready for external calls.",
+                "config": config_info,
             }
-        # Config guard still blocks — report disabled
+
         return {
-            "status": "disabled_not_enabled",
+            "status": "ok",
             "provider": "deepseek",
-            "message": "DeepSeek is configured but not enabled. Set enabled=True in provider config.",
+            "external_call": False,
+            "message": "DeepSeek provider is configured and allowed. Health check did not call external API.",
+            "config": config_info,
         }
 
     def get_provider_name(self) -> str:
