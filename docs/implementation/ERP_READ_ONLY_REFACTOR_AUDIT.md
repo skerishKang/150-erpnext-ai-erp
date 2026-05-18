@@ -96,7 +96,7 @@
 ```
 padiem_ai/padiem_ai/erp/
 ├── read_only.py           # compatibility facade (re-exports from submodules)
-├── read_only/
+├── read_only_modules/
 │   ├── __init__.py        # exports all public functions
 │   ├── sales.py           # get_sales_summary, get_quotation_summary, get_delivery_summary
 │   ├── stock.py           # get_inventory_summary
@@ -116,11 +116,11 @@ The existing `read_only.py` will remain as a facade that re-exports all public f
 # padiem_ai/padiem_ai/erp/read_only.py
 """Read-only ERP data access layer (compatibility facade)."""
 
-from padiem_ai.erp.read_only.sales import get_sales_summary, get_quotation_summary, get_delivery_summary
-from padiem_ai.erp.read_only.stock import get_inventory_summary
-from padiem_ai.erp.read_only.purchasing import get_purchase_summary
-from padiem_ai.erp.read_only.receivables import get_receivables_summary, get_payment_summary
-from padiem_ai.erp.read_only.context import get_ceo_briefing_context, get_demo_counts
+from padiem_ai.erp.read_only_modules.sales import get_sales_summary, get_quotation_summary, get_delivery_summary
+from padiem_ai.erp.read_only_modules.stock import get_inventory_summary
+from padiem_ai.erp.read_only_modules.purchasing import get_purchase_summary
+from padiem_ai.erp.read_only_modules.receivables import get_receivables_summary, get_payment_summary
+from padiem_ai.erp.read_only_modules.context import get_ceo_briefing_context, get_demo_counts
 
 __all__ = [
     "get_demo_counts",
@@ -147,6 +147,7 @@ This ensures zero breaking changes for existing imports.
 | CEO briefing output change | Low | Same functions, same logic, same return types |
 | File size growth | Low | Current 322 lines < 500 threshold |
 | ERPNext permissions | None | No changes to permission model |
+| `read_only.py` ↔ `read_only/` name collision | Medium | Use `read_only_modules/` for internal split while keeping `read_only.py` as facade |
 
 ---
 
@@ -169,7 +170,7 @@ This ensures zero breaking changes for existing imports.
 4. **Follow-up D:** Extract receivables and payment summaries
 5. **Follow-up E:** Extract CEO briefing context assembly
 6. **Follow-up F:** Extract shared read-only query utilities
-7. **Follow-up G:** Replace read_only.py with compatibility facade and verify imports
+7. **Follow-up G:** Keep read_only.py as compatibility facade and verify imports
 
 ---
 
