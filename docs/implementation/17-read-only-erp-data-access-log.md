@@ -6,7 +6,7 @@
 | 작성일 | 2026-05-18 |
 | Issue | #26 |
 | 브랜치 | `feat/issue-26-read-only-erp-data-layer` |
-| 상태 | 구현 완료, Docker 테스트 통과 |
+| 상태 | CTO 리뷰 반영 후 재검증 완료 |
 
 ---
 
@@ -21,26 +21,33 @@ padiem_ai Custom App 안에서 ERPNext demo data를 안전하게 읽어오는 re
 | 파일 | 유형 | 설명 |
 |------|------|------|
 | `padiem_ai/padiem_ai/erp/__init__.py` | 신규 | ERP data retrieval 패키지 |
-| `padiem_ai/padiem_ai/erp/read_only.py` | 신규 | Read-only 데이터 접근 함수 9개 |
-| `padiem_ai/padiem_ai/api/briefing.py` | 수정 | Read-only 레이어 호출로 변경 |
+| `padiem_ai/padiem_ai/erp/read_only.py` | 신규 | Read-only 데이터 접근 함수 9개 + helper 2개 |
+| `padiem_ai/padiem_ai/api/briefing.py` | 수정 | Read-only 레이어 호출 + 권한 체크 통합 |
 | `docs/implementation/17-read-only-erp-data-access-log.md` | 신규 | 구현 로그 |
 
 ---
 
 ## 3. 구현된 함수
 
-### read_only.py
+### read_only.py — Helper Functions
+
+| 함수 | 설명 | 반환 |
+|------|------|------|
+| `_count_records(doctype)` | `frappe.get_list` 기반 레코드 카운트 (CTO 리뷰: `frappe.db.count` 제거) | int |
+| `_safe_get_list(doctype, fields, filters)` | 안전한 `frappe.get_list` 래퍼 (CTO 리뷰: 오류를 warnings에 기록) | tuple (list, error_or_None) |
+
+### read_only.py — Public Functions
 
 | 함수 | 설명 | 반환 |
 |------|------|------|
 | `get_demo_counts()` | 모든 demo DocType 레코드 수 | dict (DocType → count) |
-| `get_sales_summary()` | Sales Invoice/Sales Order 요약 | dict (total_invoiced, total_outstanding 등) |
-| `get_purchase_summary()` | Purchase Order 요약 | dict (purchase_order_count, total 등) |
-| `get_inventory_summary()` | Stock Entry/Item 요약 | dict (total_items, stock_items 등) |
-| `get_receivables_summary()` | 미수금 요약 | dict (outstanding_invoice_count, invoices 등) |
-| `get_quotation_summary()` | Quotation 요약 | dict (quotation_count, total_quoted_value 등) |
-| `get_delivery_summary()` | Delivery Note 요약 | dict (delivery_note_count 등) |
-| `get_payment_summary()` | Payment Entry 요약 | dict (payment_count, total_received 등) |
+| `get_sales_summary()` | Sales Invoice/Sales Order 요약 | tuple (dict, warnings) |
+| `get_purchase_summary()` | Purchase Order 요약 | tuple (dict, warnings) |
+| `get_inventory_summary()` | Stock Entry/Item 요약 | tuple (dict, warnings) |
+| `get_receivables_summary()` | 미수금 요약 | tuple (dict, warnings) |
+| `get_quotation_summary()` | Quotation 요약 | tuple (dict, warnings) |
+| `get_delivery_summary()` | Delivery Note 요약 | tuple (dict, warnings) |
+| `get_payment_summary()` | Payment Entry 요약 | tuple (dict, warnings) |
 | `get_ceo_briefing_context()` | CEO 브리핑용 통합 context | dict (counts, sales, purchases, ... warnings) |
 
 ### briefing.py
@@ -132,11 +139,20 @@ ALL TESTS PASSED
 | 원칙 | 준수 여부 |
 |------|----------|
 | Read-only 접근만 | PASS — insert/update/delete 없음 |
-| frappe.get_all/get_list만 사용 | PASS |
-| ERPNext 권한 준수 | PASS — `frappe.has_permission` 사용 |
+| frappe.get_all/get_list만 사용 | PASS — `frappe.db.count` 제거, `_count_records` helper 사용 |
+| ERPNext 권한 준수 | PASS — `_require_ceo_briefing_read_permission()` 두 endpoint에 적용 |
+| 오류를 숨기지 않음 | PASS — `_safe_get_list`가 `frappe.log_error` + warnings 반환 |
 | 외부 AI API 호출 없음 | PASS |
 | Credential 없음 | PASS |
 | ERPNext core 수정 없음 | PASS |
+
+### CTO 리뷰 반영 사항 (3가지 Blocker 수정)
+
+| Blocker | 수정 내용 |
+|---------|----------|
+| `frappe.db.count` 사용 | `_count_records()` helper로 교체, `frappe.get_list` 기반 |
+| `except Exception`으로 오류 숨김 | `_safe_get_list()` helper 도입, `frappe.log_error` + warnings 반환 |
+| `get_counts()` 권한 체크 없음 | `_require_ceo_briefing_read_permission()` 공통 helper 추가 |
 
 ---
 

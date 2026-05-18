@@ -9,6 +9,11 @@ import frappe
 from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts
 
 
+def _require_ceo_briefing_read_permission():
+    """Check that the current user has read permission on Sales Invoice."""
+    frappe.has_permission("Sales Invoice", "read", throw=True)
+
+
 @frappe.whitelist()
 def get_ceo_briefing():
     """CEO Daily Briefing API endpoint.
@@ -16,7 +21,7 @@ def get_ceo_briefing():
     Returns structured ERP data summary for the CEO dashboard.
     Read-only access. No data modification. No external AI calls.
     """
-    frappe.has_permission("Sales Invoice", "read", throw=True)
+    _require_ceo_briefing_read_permission()
 
     context = get_ceo_briefing_context()
 
@@ -33,8 +38,10 @@ def get_counts():
     """Get demo data counts.
 
     Returns record counts for all demo DocTypes.
-    Read-only access.
+    Read-only access. Permission check required.
     """
+    _require_ceo_briefing_read_permission()
+
     counts = get_demo_counts()
 
     return {

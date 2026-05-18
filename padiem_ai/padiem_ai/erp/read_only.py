@@ -10,8 +10,47 @@ No external AI API calls. No credentials stored or referenced.
 import frappe
 
 
+def _count_records(doctype: str) -> int:
+    """Count records using frappe.get_list (not frappe.db.count).
+
+    Args:
+        doctype: DocType name
+
+    Returns:
+        int: Record count
+    """
+    return len(frappe.get_list(doctype, fields=["name"], limit_page_length=0))
+
+
+def _safe_get_list(doctype: str, fields: list = None, filters: dict = None) -> tuple:
+    """Safe wrapper around frappe.get_list that logs errors instead of hiding them.
+
+    Args:
+        doctype: DocType name
+        fields: Fields to fetch
+        filters: Filters to apply
+
+    Returns:
+        tuple: (results_list, error_message_or_None)
+    """
+    try:
+        results = frappe.get_list(
+            doctype,
+            fields=fields or ["name"],
+            filters=filters,
+            limit_page_length=0,
+        )
+        return results, None
+    except Exception as exc:
+        frappe.log_error(
+            title=f"Read-only ERP query failed: {doctype}",
+            message=frappe.get_traceback(),
+        )
+        return [], f"{doctype} 조회 실패: {str(exc)}"
+
+
 def get_demo_counts() -> dict:
-    """Get record counts for all demo DocTypes.
+    """Get record counts for all demo DocTypes using frappe.get_list.
 
     Returns:
         dict: DocType name -> record count
@@ -32,10 +71,7 @@ def get_demo_counts() -> dict:
 
     counts = {}
     for dt in doctypes:
-        try:
-            counts[dt] = frappe.db.count(dt)
-        except Exception:
-            counts[dt] = 0
+        counts[dt] = _count_records(dt)
 
     return counts
 
@@ -44,34 +80,32 @@ def get_sales_summary() -> dict:
     """Get sales summary from Sales Invoice and Sales Order.
 
     Returns:
-        dict: Sales summary with totals and counts
+        tuple: (dict with sales summary, list of warnings)
     """
-    try:
-        invoices = frappe.get_all(
-            "Sales Invoice",
-            filters={"docstatus": 1},
-            fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
-        )
-        submitted_invoices = invoices
-    except Exception:
-        submitted_invoices = []
+    warnings = []
 
-    try:
-        draft_invoices = frappe.get_all(
-            "Sales Invoice",
-            filters={"docstatus": 0},
-            fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
-        )
-    except Exception:
-        draft_invoices = []
+    submitted_invoices, err = _safe_get_list(
+        "Sales Invoice",
+        filters={"docstatus": 1},
+        fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
+    )
+    if err:
+        warnings.append(err)
 
-    try:
-        sales_orders = frappe.get_all(
-            "Sales Order",
-            fields=["grand_total", "customer", "delivery_date", "status"],
-        )
-    except Exception:
-        sales_orders = []
+    draft_invoices, err = _safe_get_list(
+        "Sales Invoice",
+        filters={"docstatus": 0},
+        fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
+    )
+    if err:
+        warnings.append(err)
+
+    sales_orders, err = _safe_get_list(
+        "Sales Order",
+        fields=["grand_total", "customer", "delivery_date", "status"],
+    )
+    if err:
+        warnings.append(err)
 
     total_invoiced = sum(inv.get("grand_total", 0) for inv in submitted_invoices)
     total_outstanding = sum(inv.get("outstanding_amount", 0) for inv in submitted_invoices)
@@ -84,73 +118,78 @@ def get_sales_summary() -> dict:
         "draft_invoice_count": len(draft_invoices),
         "sales_order_count": len(sales_orders),
         "total_sales_order_value": total_so,
-    }
+    }, warnings
 
 
 def get_purchase_summary() -> dict:
     """Get purchase summary from Purchase Order.
 
     Returns:
-        dict: Purchase summary with totals and counts
+        tuple: (dict with purchase summary, list of warnings)
     """
-    try:
-        purchase_orders = frappe.get_all(
-            "Purchase Order",
-            fields=["grand_total", "supplier", "status"],
-        )
-    except Exception:
-        purchase_orders = []
+    warnings = []
+
+    purchase_orders, err = _safe_get_list(
+        "Purchase Order",
+        fields=["grand_total", "supplier", "status"],
+    )
+    if err:
+        warnings.append(err)
 
     total_po = sum(po.get("grand_total", 0) for po in purchase_orders)
 
     return {
         "purchase_order_count": len(purchase_orders),
         "total_purchase_order_value": total_po,
-    }
+    }, warnings
 
 
 def get_inventory_summary() -> dict:
     """Get inventory summary from Stock Entry and Item.
 
     Returns:
-        dict: Inventory summary with item count and stock entry info
+        tuple: (dict with inventory summary, list of warnings)
     """
-    try:
-        items = frappe.get_all("Item", fields=["name", "item_name", "item_group", "is_stock_item"])
-        stock_items = [i for i in items if i.get("is_stock_item")]
-    except Exception:
-        items = []
-        stock_items = []
+    warnings = []
 
-    try:
-        stock_entries = frappe.get_all(
-            "Stock Entry",
-            fields=["name", "stock_entry_type", "posting_date", "docstatus"],
-        )
-    except Exception:
-        stock_entries = []
+    items, err = _safe_get_list(
+        "Item",
+        fields=["name", "item_name", "item_group", "is_stock_item"],
+    )
+    if err:
+        warnings.append(err)
+
+    stock_items = [i for i in items if i.get("is_stock_item")]
+
+    stock_entries, err = _safe_get_list(
+        "Stock Entry",
+        fields=["name", "stock_entry_type", "posting_date", "docstatus"],
+    )
+    if err:
+        warnings.append(err)
 
     return {
         "total_items": len(items),
         "stock_items": len(stock_items),
         "stock_entry_count": len(stock_entries),
-    }
+    }, warnings
 
 
 def get_receivables_summary() -> dict:
     """Get receivables summary from Sales Invoice.
 
     Returns:
-        dict: Receivables summary with outstanding amounts
+        tuple: (dict with receivables summary, list of warnings)
     """
-    try:
-        invoices = frappe.get_all(
-            "Sales Invoice",
-            filters={"outstanding_amount": (">", 0)},
-            fields=["name", "customer", "outstanding_amount", "due_date", "posting_date"],
-        )
-    except Exception:
-        invoices = []
+    warnings = []
+
+    invoices, err = _safe_get_list(
+        "Sales Invoice",
+        filters={"outstanding_amount": (">", 0)},
+        fields=["name", "customer", "outstanding_amount", "due_date", "posting_date"],
+    )
+    if err:
+        warnings.append(err)
 
     total_outstanding = sum(inv.get("outstanding_amount", 0) for inv in invoices)
 
@@ -158,63 +197,66 @@ def get_receivables_summary() -> dict:
         "outstanding_invoice_count": len(invoices),
         "total_outstanding": total_outstanding,
         "invoices": invoices,
-    }
+    }, warnings
 
 
 def get_quotation_summary() -> dict:
     """Get quotation summary.
 
     Returns:
-        dict: Quotation summary with counts and status
+        tuple: (dict with quotation summary, list of warnings)
     """
-    try:
-        quotations = frappe.get_all(
-            "Quotation",
-            fields=["name", "party_name", "transaction_date", "valid_till", "grand_total", "status"],
-        )
-    except Exception:
-        quotations = []
+    warnings = []
+
+    quotations, err = _safe_get_list(
+        "Quotation",
+        fields=["name", "party_name", "transaction_date", "valid_till", "grand_total", "status"],
+    )
+    if err:
+        warnings.append(err)
 
     total_quoted = sum(q.get("grand_total", 0) for q in quotations)
 
     return {
         "quotation_count": len(quotations),
         "total_quoted_value": total_quoted,
-    }
+    }, warnings
 
 
 def get_delivery_summary() -> dict:
     """Get delivery note summary.
 
     Returns:
-        dict: Delivery note summary with counts
+        tuple: (dict with delivery summary, list of warnings)
     """
-    try:
-        delivery_notes = frappe.get_all(
-            "Delivery Note",
-            fields=["name", "customer", "posting_date", "docstatus"],
-        )
-    except Exception:
-        delivery_notes = []
+    warnings = []
+
+    delivery_notes, err = _safe_get_list(
+        "Delivery Note",
+        fields=["name", "customer", "posting_date", "docstatus"],
+    )
+    if err:
+        warnings.append(err)
 
     return {
         "delivery_note_count": len(delivery_notes),
-    }
+    }, warnings
 
 
 def get_payment_summary() -> dict:
     """Get payment entry summary.
 
     Returns:
-        dict: Payment entry summary with counts and totals
+        tuple: (dict with payment summary, list of warnings)
     """
-    try:
-        payments = frappe.get_all(
-            "Payment Entry",
-            fields=["name", "party", "paid_amount", "posting_date", "payment_type"],
-        )
-    except Exception:
-        payments = []
+    warnings = []
+
+    payments, err = _safe_get_list(
+        "Payment Entry",
+        fields=["name", "party", "paid_amount", "posting_date", "payment_type"],
+    )
+    if err:
+        warnings.append(err)
 
     total_received = sum(p.get("paid_amount", 0) for p in payments if p.get("payment_type") == "Receive")
     total_paid = sum(p.get("paid_amount", 0) for p in payments if p.get("payment_type") == "Pay")
@@ -223,7 +265,7 @@ def get_payment_summary() -> dict:
         "payment_count": len(payments),
         "total_received": total_received,
         "total_paid": total_paid,
-    }
+    }, warnings
 
 
 def get_ceo_briefing_context() -> dict:
@@ -233,23 +275,39 @@ def get_ceo_briefing_context() -> dict:
         dict: Complete briefing context with counts, sales, purchases,
               inventory, receivables, quotations, deliveries, payments, and warnings.
     """
-    counts = get_demo_counts()
-    sales = get_sales_summary()
-    purchases = get_purchase_summary()
-    inventory = get_inventory_summary()
-    receivables = get_receivables_summary()
-    quotations = get_quotation_summary()
-    deliveries = get_delivery_summary()
-    payments = get_payment_summary()
+    all_warnings = []
 
-    warnings = []
+    counts = get_demo_counts()
+
+    sales, w = get_sales_summary()
+    all_warnings.extend(w)
+
+    purchases, w = get_purchase_summary()
+    all_warnings.extend(w)
+
+    inventory, w = get_inventory_summary()
+    all_warnings.extend(w)
+
+    receivables, w = get_receivables_summary()
+    all_warnings.extend(w)
+
+    quotations, w = get_quotation_summary()
+    all_warnings.extend(w)
+
+    deliveries, w = get_delivery_summary()
+    all_warnings.extend(w)
+
+    payments, w = get_payment_summary()
+    all_warnings.extend(w)
+
+    # Business-level warnings
     if receivables["outstanding_invoice_count"] > 0:
-        warnings.append(
+        all_warnings.append(
             f"{receivables['outstanding_invoice_count']}건의 미수금 invoices "
             f"(총 {receivables['total_outstanding']:,.0f}원)"
         )
     if counts.get("Sales Order", 0) > 0:
-        warnings.append(f"{counts['Sales Order']}건의 Sales Order 진행 중")
+        all_warnings.append(f"{counts['Sales Order']}건의 Sales Order 진행 중")
 
     return {
         "counts": counts,
@@ -260,5 +318,5 @@ def get_ceo_briefing_context() -> dict:
         "quotations": quotations,
         "deliveries": deliveries,
         "payments": payments,
-        "warnings": warnings,
+        "warnings": all_warnings,
     }
