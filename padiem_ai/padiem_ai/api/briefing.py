@@ -1,11 +1,12 @@
 """CEO Daily Briefing API endpoint.
 
-Reads ERPNext demo data via the read-only layer and returns structured summary.
-No external AI calls. No data modification.
+Reads ERPNext demo data via the read-only layer and returns structured summary
+with deterministic mock briefing. No external AI calls. No data modification.
 """
 
 import frappe
 
+from padiem_ai.briefing.mock_generator import generate_mock_ceo_briefing
 from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts
 
 
@@ -18,17 +19,19 @@ def _require_ceo_briefing_read_permission():
 def get_ceo_briefing():
     """CEO Daily Briefing API endpoint.
 
-    Returns structured ERP data summary for the CEO dashboard.
+    Returns structured ERP data summary and deterministic mock briefing.
     Read-only access. No data modification. No external AI calls.
     """
     _require_ceo_briefing_read_permission()
 
     context = get_ceo_briefing_context()
+    briefing = generate_mock_ceo_briefing(context)
 
     return {
         "success": True,
         "data": context,
-        "ai_summary": "CEO Daily Briefing — read-only data layer active. AI integration pending.",
+        "briefing": briefing,
+        "ai_summary": "Mock CEO Briefing — deterministic formatter. AI provider integration pending.",
         "timestamp": frappe.utils.now(),
     }
 
