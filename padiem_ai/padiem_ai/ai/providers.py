@@ -163,18 +163,32 @@ class DeepSeekProvider(BaseAIProvider):
         return self.generate_text(prompt, context)
 
     def health_check(self) -> dict:
-        """Check DeepSeek provider status. No external API call.
-
-        Uses get_provider_config_status to reflect enable chain:
-        - status="ok" when all chains pass
-        - disabled_not_enabled / disabled_missing_config / disabled_external_ai_off otherwise
-        Never exposes API key or makes external calls.
-        """
+        """Check DeepSeek provider status without making an external API call."""
         from padiem_ai.ai.config import get_provider_config_status
+
         status_info = get_provider_config_status("deepseek")
+
+        config_info = {
+            "enabled": status_info.get("enabled", False),
+            "external_call_allowed": status_info.get("external_call_allowed", False),
+            "credentials_present": status_info.get("credentials_present", False),
+        }
+
+        if status_info["status"] != "ok":
+            return {
+                "status": status_info["status"],
+                "provider": "deepseek",
+                "external_call": False,
+                "message": "DeepSeek provider is not ready for external calls.",
+                "config": config_info,
+            }
+
         return {
-            "status": status_info["status"],
+            "status": "ok",
             "provider": "deepseek",
+            "external_call": False,
+            "message": "DeepSeek provider is configured and allowed. Health check did not call external API.",
+            "config": config_info,
         }
 
     def get_provider_name(self) -> str:
