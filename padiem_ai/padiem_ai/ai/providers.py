@@ -27,6 +27,43 @@ class MockProvider(BaseAIProvider):
         return "mock"
 
 
+class DeepSeekProvider(BaseAIProvider):
+    """DeepSeek provider skeleton — no external calls, not yet implemented.
+
+    This is a structural placeholder for future DeepSeek API integration.
+    All methods raise NotImplementedError until the actual API client is wired in.
+    Config guard (assert_provider_allowed in ai/config.py) blocks usage by default.
+    """
+
+    def generate_text(self, prompt: str, context: dict, options: dict = None) -> str:
+        raise NotImplementedError(
+            "DeepSeek provider is not yet implemented. "
+            "Use 'mock' provider for development and testing."
+        )
+
+    def generate_json(self, prompt: str, context: dict, schema: dict = None, options: dict = None) -> dict:
+        raise NotImplementedError(
+            "DeepSeek provider is not yet implemented. "
+            "Use 'mock' provider for development and testing."
+        )
+
+    def summarize(self, context: dict, prompt_template: str = "") -> str:
+        raise NotImplementedError(
+            "DeepSeek provider is not yet implemented. "
+            "Use 'mock' provider for development and testing."
+        )
+
+    def health_check(self) -> dict:
+        return {
+            "status": "not_implemented",
+            "provider": "deepseek",
+            "message": "DeepSeek provider is registered but not yet implemented.",
+        }
+
+    def get_provider_name(self) -> str:
+        return "deepseek"
+
+
 class PlaceholderProvider(BaseAIProvider):
     """Placeholder for future providers — never makes external calls.
 

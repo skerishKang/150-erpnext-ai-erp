@@ -1,14 +1,15 @@
 """AI Provider Registry.
 
-Provides provider lookup by name. Currently only 'mock' is active.
-Other providers (kilocode, opencodego, nvidia, deepseek, mistral, ollama)
-are registered as placeholders and return not-implemented responses.
+Provides provider lookup by name.
+Currently only 'mock' is active.
+'deepseek' exists as a skeleton provider but remains disabled by config guard.
+Other providers are registered as placeholders.
 
 No external API calls are made by this module.
 No credentials are stored or referenced.
 """
 
-from padiem_ai.ai.providers import MockProvider, PlaceholderProvider
+from padiem_ai.ai.providers import MockProvider, DeepSeekProvider, PlaceholderProvider
 
 # Supported provider names (lowercase)
 SUPPORTED_PROVIDERS = [
@@ -24,11 +25,14 @@ SUPPORTED_PROVIDERS = [
 # Default provider
 DEFAULT_PROVIDER = "mock"
 
-# Active providers (actually implemented)
+# Active providers (actually implemented and enabled)
 _ACTIVE_PROVIDERS = {"mock"}
 
+# Skeleton providers (structurally present but disabled by config guard)
+_SKELETON_PROVIDERS = {"deepseek"}
+
 # Placeholder providers (registered but not implemented)
-_PLACEHOLDER_PROVIDERS = {"kilocode", "opencodego", "nvidia", "deepseek", "mistral", "ollama"}
+_PLACEHOLDER_PROVIDERS = {"kilocode", "opencodego", "nvidia", "mistral", "ollama"}
 
 
 def _normalize(name: str) -> str:
@@ -58,6 +62,9 @@ def get_provider(provider_name: str = None):
             f"Unknown provider: '{provider_name}'. "
             f"Supported providers: {', '.join(SUPPORTED_PROVIDERS)}"
         )
+
+    if name == "deepseek":
+        return DeepSeekProvider()
 
     if name in _ACTIVE_PROVIDERS:
         return MockProvider()
