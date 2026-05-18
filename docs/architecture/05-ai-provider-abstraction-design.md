@@ -382,20 +382,21 @@ padiem_ai/
 {
     "provider_name": "deepseek",
     "credential_reference": "site_config.padiem_ai_api_key"
-    # 실제 key는 site_config.json에 저장
+    # credential은 site_config 또는 환경변수 등 Git 밖의 안전한 위치에 저장
+    # 저장 방식은 배포 환경별로 결정. 문서와 Git에는 절대 기록하지 않음
 }
 
 # 잘못된 예: 실제 key를 직접 기록
 {
     "provider_name": "deepseek",
-    "api_key": "sk-xxx..."  # 절대 이렇게 하지 않음
+    "api_key": "<never commit real credential>"
 }
 ```
 
 ### 설정 저장 위치
 
 - **Frappe Site Config**: `sites/frontend/site_config.json` (Git 제외)
-- **환경변수**: `PADEMI_AI_API_KEY` 등 (배포 환경별 검토)
+- **환경변수**: `PADIEM_AI_API_KEY` 등 (배포 환경별 검토)
 - **데이터베이스**: v2에서 관리자 UI로 관리 검토
 
 ### 설정 예시 (concept only)
@@ -503,7 +504,7 @@ class MockProvider(BaseAIProvider):
 | **Phase 1 개발** | 모든 기능에서 MockProvider 사용 |
 | **Phase 2 테스트** | DeepSeek 연결 후에도 MockProvider로 테스트 |
 | **데모** | 고객 데모 시 MockProvider로 안전하게 시연 |
-| **장애** | 외부 provider 장애 시 fallback |
+| **장애 시나리오 테스트** | provider 장애 상황을 시뮬레이션하여 fallback 로직 검증 |
 
 ### 첫 구현 권장
 
@@ -530,6 +531,18 @@ MockProvider가 있어야:
 | **관리자만 설정** | 관리자만 provider 설정 가능 |
 | **Role-based access** | ERPNext Role Permission Manager 준수 |
 | **데이터 제한** | 사용자가 볼 수 없는 ERP 데이터는 AI도 볼 수 없음 |
+
+### Natural-language ERP Query 보안 원칙
+
+자연어 ERP Query 기능은 특히 주의가 필요합니다. AI가 ERP 데이터에 직접 접근하는 구조이므로 다음 원칙을 반드시 준수합니다.
+
+| 원칙 | 설명 |
+|------|------|
+| **임의 SQL 생성/실행 금지** | AI가 임의 SQL을 생성하거나 실행하지 않음 |
+| **임의 DocType 접근 금지** | AI가 임의 DocType에 접근하지 않음 |
+| **Allowlisted 매핑만 사용** | DocType, field, filter는 사전에 정의된 allowlisted 매핑만 사용 |
+| **권한 검사 후 read-only** | ERPNext 권한 검사 후 read-only query만 수행 |
+| **Write query 금지** | UPDATE, DELETE, INSERT 등 write query는 금지 |
 
 ### v1 로그 항목
 
@@ -560,7 +573,7 @@ if not frappe.has_role("System Manager"):
 
 | 장애 유형 | 대응 |
 |----------|------|
-| **provider timeout** | 지정 시간 내 응답 없으면 fallback to mock |
+| **provider timeout** | 지정 시간 내 응답 없으면 degraded mode (deterministic/cached summary) |
 | **provider rate limit** | rate limit 초과 시 대기 후 재시도 또는 fallback |
 | **provider error** | API 에러 시 사용자에게 기술 오류 노출하지 않음 |
 | **invalid JSON response** | JSON 파싱 실패 시 텍스트 응답으로 fallback |
@@ -571,10 +584,12 @@ if not frappe.has_role("System Manager"):
 ```
 1차: 외부 provider (DeepSeek 등)
   ↓ 실패 시
-2차: Mock provider (미리 정의된 응답)
+2차: Cached summary (이전 AI 응답 캐시)
   ↓ 실패 시
-3차: 간단한 deterministic summary (ERP 데이터 직접 집계)
+3차: Deterministic summary (ERP 데이터 직접 집계, 규칙 기반)
 ```
+
+**주의**: MockProvider는 개발/테스트/안전 데모용입니다. 운영 환경에서는 provider 장애 시 deterministic summary, cached summary, degraded mode로 fallback합니다. 운영에서 mock 응답을 실제 업무 응답처럼 보여주지 않습니다.
 
 ### 사용자 경험 보호
 
@@ -584,16 +599,18 @@ try:
     response = provider.generate_text(prompt, context, options)
 except ProviderTimeoutError:
     return {
-        "success": True,  # 기술적으로는 실패지만 사용자에게는 성공으로 표시
-        "output_text": "AI 응답 시간이 초과되었습니다. 기본 요약을 표시합니다.",
-        "fallback": True,
+        "success": False,
+        "degraded": True,
+        "fallback_used": True,
+        "user_message": "AI 서비스를 일시적으로 사용할 수 없어 ERP 기본 요약을 표시합니다.",
         "fallback_data": get_deterministic_summary(context)
     }
 except ProviderError as e:
     return {
-        "success": True,
-        "output_text": "AI 서비스를 일시적으로 사용할 수 없습니다. 기본 요약을 표시합니다.",
-        "fallback": True,
+        "success": False,
+        "degraded": True,
+        "fallback_used": True,
+        "user_message": "AI 서비스를 일시적으로 사용할 수 없어 ERP 기본 요약을 표시합니다.",
         "fallback_data": get_deterministic_summary(context)
     }
 ```
