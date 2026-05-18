@@ -22,7 +22,7 @@
 
 | Function | Lines | Purpose |
 |----------|-------|---------|
-| `get_demo_counts()` | 25-76 | Returns DocType → record count mapping for demo entities |
+| `get_demo_counts()` | 52-76 | Returns DocType → record count mapping for demo entities |
 | `get_sales_summary()` | 79-121 | Aggregates Sales Invoice (submitted/draft) and Sales Order data |
 | `get_purchase_summary()` | 124-144 | Aggregates Purchase Order totals and counts |
 | `get_inventory_summary()` | 147-175 | Returns Item counts (stock vs total) and Stock Entry count |
@@ -43,11 +43,18 @@
 
 ## Call Sites in Repository
 
+### Runtime Call Sites
+
 | File | Import Statement | Usage |
 |------|------------------|-------|
-| `padiem_ai/api/briefing.py` | `from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts` | `get_ceo_briefing_context()` and `get_demo_counts()` |
-| `padiem_ai/www/ceo_briefing.py` | `from padiem_ai.erp.read_only import get_ceo_briefing_context` | `get_ceo_briefing_context()` |
-| `padiem_ai/briefing/mock_generator.py` | `from padiem_ai.erp.read_only import get_ceo_briefing_context` | Conditional import for `get_ceo_briefing_context()` |
+| `padiem_ai/padiem_ai/api/briefing.py` | `from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts` | `get_ceo_briefing_context()` and `get_demo_counts()` |
+| `padiem_ai/padiem_ai/www/ceo_briefing.py` | `from padiem_ai.erp.read_only import get_ceo_briefing_context` | `get_ceo_briefing_context()` |
+
+### Documentation/Example References
+
+| File | Nature | Notes |
+|------|--------|-------|
+| `padiem_ai/padiem_ai/briefing/mock_generator.py` | Docstring example | Lines 7-8 show usage example in module docstring; no runtime import |
 
 ---
 
@@ -156,13 +163,13 @@ This ensures zero breaking changes for existing imports.
 
 ## Follow-Up Implementation Issues
 
-1. **Issue #47:** Implement `read_only/sales.py` - Extract sales, quotation, delivery functions
-2. **Issue #48:** Implement `read_only/stock.py` - Extract inventory functions
-3. **Issue #49:** Implement `read_only/purchasing.py` - Extract purchase functions
-4. **Issue #50:** Implement `read_only/receivables.py` - Extract receivables, payment functions
-5. **Issue #51:** Implement `read_only/context.py` - Extract CEO briefing assembly
-6. **Issue #52:** Implement `read_only/utils.py` - Extract shared query utilities
-7. **Issue #53:** Update read_only.py facade and test all call sites
+1. **Follow-up A:** Extract sales, quotation, delivery summaries
+2. **Follow-up B:** Extract inventory summary
+3. **Follow-up C:** Extract purchase summary
+4. **Follow-up D:** Extract receivables and payment summaries
+5. **Follow-up E:** Extract CEO briefing context assembly
+6. **Follow-up F:** Extract shared read-only query utilities
+7. **Follow-up G:** Replace read_only.py with compatibility facade and verify imports
 
 ---
 
@@ -198,6 +205,6 @@ print('All imports OK')
 - **File Size:** 322 lines (within threshold)
 - **Public Functions:** 9 functions
 - **Private Helpers:** 2 functions
-- **Call Sites:** 3 files
+- **Call Sites:** 3 files (2 runtime, 1 documentation)
 - **Recommended Split:** 6 domain-based modules
 - **Risk Level:** Low (audit phase, no code changes)
