@@ -438,7 +438,7 @@ Phase 3: staging + production (정식 운영)
 
 | 원칙 | 설명 |
 |------|------|
-| **기본 mock/local-safe mode** | 개발/파일럿初期에는 MockProvider 사용 |
+| **기본 mock/local-safe mode** | 개발/파일럿 초기에는 MockProvider 사용 |
 | **관리자 설정 후 활성화** | 외부 provider는 관리자 설정과 명시적 동의 후 활성화 |
 | **Credential Git 금지** | API key는 Git 밖에서 관리 |
 | **최소 데이터 전달** | 외부 전송 시 최소 필요 데이터만 전달 |
