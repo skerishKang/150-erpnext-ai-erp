@@ -440,9 +440,9 @@ Based on test import queries:
 If full import causes issues:
 
 ```bash
-# Restore from backup taken at 2026-05-18 07:16:39
-docker exec frappe_docker-frontend-1 bench --site frontend restore \
-  /home/frappe/frappe-bench/sites/frontend/private/backups/20260518_071635-frontend-database.sql.gz
+# Restore from backup — run in the bench container (backend)
+docker exec frappe_docker-backend-1 bench --site frontend restore \
+  /home/frappe/frappe-bench/sites/frontend/private/backups/<backup-file>.sql.gz
 ```
 
 ---
