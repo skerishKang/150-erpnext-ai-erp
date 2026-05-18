@@ -7,7 +7,6 @@ Respects ERPNext permissions.
 No external AI API calls. No credentials stored or referenced.
 """
 
-import frappe
 from padiem_ai.erp.read_only_modules.utils import _count_records, _safe_get_list
 
 
