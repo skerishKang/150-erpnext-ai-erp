@@ -1,0 +1,33 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="ceo-briefing-page" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <h1>CEO Daily Briefing</h1>
+    <p style="color: #6c757d; font-size: 14px;">
+        Mock CEO Briefing — deterministic formatter. AI provider integration pending.
+    </p>
+
+    {% if error %}
+    <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin: 16px 0;">
+        {{ error }}
+    </div>
+    {% elif briefing %}
+    <div style="background: #f8f9fa; padding: 16px; border-radius: 4px; margin: 16px 0;">
+        <strong>요약:</strong> {{ briefing.summary }}
+    </div>
+
+    {% for section in briefing.sections %}
+    <div style="margin: 16px 0; padding: 16px; border: 1px solid #dee2e6; border-radius: 4px;">
+        <h3 style="margin-top: 0;">{{ section.title }}</h3>
+        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{{ section.content }}</pre>
+    </div>
+    {% endfor %}
+
+    <div style="margin-top: 24px; padding: 12px; background: #e9ecef; border-radius: 4px; font-size: 12px; color: #6c757d;">
+        생성 시간: {{ briefing.raw_context.get('timestamp', 'N/A') if briefing.raw_context else 'N/A' }}
+        | 데이터 소스: ERPNext (read-only)
+        | AI provider: 미연결
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
