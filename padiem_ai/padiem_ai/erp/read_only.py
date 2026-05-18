@@ -14,6 +14,7 @@ from padiem_ai.erp.read_only_modules.sales import (
     get_delivery_summary,
 )
 from padiem_ai.erp.read_only_modules.inventory import get_inventory_summary
+from padiem_ai.erp.read_only_modules.purchasing import get_purchase_summary
 
 
 def get_demo_counts() -> dict:
@@ -41,29 +42,6 @@ def get_demo_counts() -> dict:
         counts[dt] = _count_records(dt)
 
     return counts
-
-
-def get_purchase_summary() -> dict:
-    """Get purchase summary from Purchase Order.
-
-    Returns:
-        tuple: (dict with purchase summary, list of warnings)
-    """
-    warnings = []
-
-    purchase_orders, err = _safe_get_list(
-        "Purchase Order",
-        fields=["grand_total", "supplier", "status"],
-    )
-    if err:
-        warnings.append(err)
-
-    total_po = sum(po.get("grand_total", 0) for po in purchase_orders)
-
-    return {
-        "purchase_order_count": len(purchase_orders),
-        "total_purchase_order_value": total_po,
-    }, warnings
 
 
 def get_receivables_summary() -> dict:
