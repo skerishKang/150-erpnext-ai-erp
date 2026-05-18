@@ -163,19 +163,18 @@ class DeepSeekProvider(BaseAIProvider):
         return self.generate_text(prompt, context)
 
     def health_check(self) -> dict:
-        """Check DeepSeek provider status. No external call unless fully configured."""
-        cfg = self._get_config()
-        if not cfg["api_key_present"]:
-            return {
-                "status": "disabled_missing_config",
-                "provider": "deepseek",
-                "message": "DeepSeek API key not configured (PA_DIEM_DEEPSEEK_API_KEY)",
-            }
-        # Config guard still blocks — report disabled
+        """Check DeepSeek provider status. No external API call.
+
+        Uses get_provider_config_status to reflect enable chain:
+        - status="ok" when all chains pass
+        - disabled_not_enabled / disabled_missing_config / disabled_external_ai_off otherwise
+        Never exposes API key or makes external calls.
+        """
+        from padiem_ai.ai.config import get_provider_config_status
+        status_info = get_provider_config_status("deepseek")
         return {
-            "status": "disabled_not_enabled",
+            "status": status_info["status"],
             "provider": "deepseek",
-            "message": "DeepSeek is configured but not enabled. Set enabled=True in provider config.",
         }
 
     def get_provider_name(self) -> str:
