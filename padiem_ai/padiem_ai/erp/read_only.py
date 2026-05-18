@@ -13,6 +13,7 @@ from padiem_ai.erp.read_only_modules.sales import (
     get_quotation_summary,
     get_delivery_summary,
 )
+from padiem_ai.erp.read_only_modules.inventory import get_inventory_summary
 
 
 def get_demo_counts() -> dict:
@@ -62,37 +63,6 @@ def get_purchase_summary() -> dict:
     return {
         "purchase_order_count": len(purchase_orders),
         "total_purchase_order_value": total_po,
-    }, warnings
-
-
-def get_inventory_summary() -> dict:
-    """Get inventory summary from Stock Entry and Item.
-
-    Returns:
-        tuple: (dict with inventory summary, list of warnings)
-    """
-    warnings = []
-
-    items, err = _safe_get_list(
-        "Item",
-        fields=["name", "item_name", "item_group", "is_stock_item"],
-    )
-    if err:
-        warnings.append(err)
-
-    stock_items = [i for i in items if i.get("is_stock_item")]
-
-    stock_entries, err = _safe_get_list(
-        "Stock Entry",
-        fields=["name", "stock_entry_type", "posting_date", "docstatus"],
-    )
-    if err:
-        warnings.append(err)
-
-    return {
-        "total_items": len(items),
-        "stock_items": len(stock_items),
-        "stock_entry_count": len(stock_entries),
     }, warnings
 
 
