@@ -329,7 +329,7 @@ def get_ceo_briefing():
 
 | 항목 | v1 | v2 |
 |------|----|----|
-| Custom Page | CEO Dashboard 1개 | 역별별 대시보드 추가 |
+| Custom Page | CEO Dashboard 1개 | 역할별 대시보드 추가 |
 | Desk Workspace | 기존 Workspace 유지 | Custom Workspace 추가 |
 | 메뉴 | "Padiem AI" 메뉴 추가 | 역할별 메뉴 분리 |
 | 접근 권한 | 관리자, CEO만 접근 | 역할별 접근 권한 분리 |
