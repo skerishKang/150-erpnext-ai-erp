@@ -3,7 +3,7 @@
 Returns deterministic responses without any external API calls.
 """
 
-from padiem_ai.padiem_ai.ai.base import BaseAIProvider
+from padiem_ai.ai.base import BaseAIProvider
 
 
 class MockProvider(BaseAIProvider):
