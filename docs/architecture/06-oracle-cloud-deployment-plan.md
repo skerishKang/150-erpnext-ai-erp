@@ -87,7 +87,7 @@ Padiem AI ERP는 로컬 Docker 환경에서 ERPNext를 검증했습니다. 이�
                            ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Oracle Cloud VM                                │
-│              Ubuntu 24.04 LTS (ARM, 4 OCPU, 16GB+)               │
+│         Ubuntu 24.04 LTS (ARM A1.Flex 또는 AMD64)                 │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │                  Docker Compose Stack                       │  │
@@ -145,7 +145,7 @@ Padiem AI ERP는 로컬 Docker 환경에서 ERPNext를 검증했습니다. 이�
 
 | 항목 | 최소 사양 (파일럿) | 권장 사양 (운영) |
 |------|-------------------|-----------------|
-| **Shape** | VM.Standard.A1.Flex | VM.Standard.A1.Flex |
+| **Shape** | VM.Standard.A1.Flex (ARM) | VM.Standard.A1.Flex (ARM) 또는 AMD64 |
 | **OCPU** | 2 | 4 이상 |
 | **RAM** | 8 GB | 16 GB 이상 |
 | **Boot Storage** | 100 GB | 200 GB |
@@ -153,6 +153,8 @@ Padiem AI ERP는 로컬 Docker 환경에서 ERPNext를 검증했습니다. 이�
 | **OS** | Ubuntu 24.04 LTS | Ubuntu 24.04 LTS |
 | **Network** | Public IP 1개 | Public IP 1개 (고정 IP 권장) |
 | **Bandwidth** | 10 TB/월 (무료 포함) | 10 TB/월 |
+
+> **ARM 호환성 참고**: ARM A1.Flex는 비용 효율 후보이나, ERPNext Docker image 호환성 검증이 필요합니다. 호환성 문제가 있으면 AMD64 shape로 전환합니다.
 
 ### 필수 소프트웨어
 
@@ -168,7 +170,7 @@ Padiem AI ERP는 로컬 Docker 환경에서 ERPNext를 검증했습니다. 이�
 
 | 포트 | 프로토콜 | 용도 | 외부 노출 |
 |------|---------|------|----------|
-| 22 | TCP | SSH 접속 | 예 (key 기반) |
+| 22 | TCP | SSH 접속 | 예 (key 기반, 관리자 고정 IP만 허용 권장) |
 | 80 | TCP | HTTP (→ HTTPS 리다이렉트) | 예 |
 | 443 | TCP | HTTPS | 예 |
 | 8080 | TCP | ERPNext Frontend | 아니오 (Nginx에서 프록시) |
@@ -189,10 +191,11 @@ Egress:
 
 ### SSH 접근 방식
 
-- SSH key 기반 접속만 허용
-- Password 로그인 비활성화
+- SSH key 기반 접속만 허용 (Password 로그인 비활성화)
+- 관리자 고정 IP만 허용 권장 (OCI security list 또는 NSG에서 IP 제한)
 - root 로그인 비활성화
 - 별도 admin 사용자 생성
+- fail2ban 등 brute-force 방어 검토
 
 ---
 
@@ -221,7 +224,7 @@ Egress:
 
 ### Production compose 구성 검토
 
-운영 환경에서는 `pwd.yml` 그대로 사용하지 않고, production compose 구성을 검토해야 합니다.
+운영 환경에서는 `pwd.yml` 그대로 사용하지 않습니다. `pwd.yml`은 개발/테스트용이며, production compose는 별도로 작성하고, 보안 리뷰 및 백업/복원 테스트를 거친 후 사용합니다.
 
 | 항목 | pwd.yml (현재) | Production (권장) |
 |------|----------------|------------------|
@@ -337,11 +340,13 @@ ufw enable
 
 | 대상 | 방법 | 빈도 | 보존 기간 |
 |------|------|------|----------|
-| **ERPNext DB** | `bench backup` 또는 `mysqldump` | 매일 1회 | 7일 |
-| **Site files** | 파일시스템 백업 | 매일 1회 | 7일 |
-| **Docker volume** | volume 스냅샷 | 매주 1회 | 4주 |
-| **VM 전체** | OCI boot volume backup | 매주 1회 | 4주 |
+| **ERPNext DB** | `bench backup` 또는 `mysqldump` | 매일 1회 | 파일럿: 7~14일 / 운영: 별도 보존 정책 |
+| **Site files** | 파일시스템 백업 | 매일 1회 | 파일럿: 7~14일 / 운영: 별도 보존 정책 |
+| **Docker volume** | volume 스냅샷 | 매주 1회 | 파일럿: 4주 / 운영: 별도 보존 정책 |
+| **VM 전체** | OCI boot volume backup | 매주 1회 | 파일럿: 4주 / 운영: 별도 보존 정책 |
 | **설정 파일** | Git 저장 | 변경 시 | 영구 |
+
+> **보존 기간 참고**: 운영 환경의 보존 기간은 고객 계약 및 데이터 보존 정책에 따라 결정합니다.
 
 ### 백업 저장 위치
 
@@ -495,7 +500,7 @@ Phase 3: staging + production (정식 운영)
 ### 서버 생성 및 초기 설정
 
 - [ ] Oracle Cloud 계정 생성
-- [ ] ARM VM 생성 (Ubuntu 24.04 LTS)
+- [ ] VM 생성 (Ubuntu 24.04 LTS, ARM A1.Flex 또는 AMD64 — ERPNext Docker image 호환성 검증 후 결정)
 - [ ] SSH key 설정
 - [ ] 보안 그룹 설정 (22, 80, 443)
 - [ ] 시스템 패키지 업데이트
@@ -551,11 +556,13 @@ Phase 3: staging + production (정식 운영)
 
 | 항목 | 무료 티어 | 유료 (파일럿) |
 |------|----------|--------------|
-| **VM compute** | 0원 (무료 티어 내) | 30,000~50,000원 |
-| **Block storage (100GB)** | 0원 (200GB까지 무료) | ~10,000원 |
-| **Bandwidth** | 0원 (10TB/월 무료 포함) | ~0원 (파일럿 트래픽 적음) |
-| **Object Storage** | 0원 (20GB 무료) | ~5,000원 |
-| **합계** | ~0원 | ~45,000~65,000원 |
+| **VM compute** | 0원 (무료 티어 내) | 월 수만원대 가능성 |
+| **Block storage (100GB)** | 0원 (200GB까지 무료) | 월 수천원~수만원 |
+| **Bandwidth** | 0원 (10TB/월 무료 포함) | 파일럿 트래픽 기준 미미 |
+| **Object Storage** | 0원 (20GB 무료) | 월 수천원 |
+| **합계** | ~0원 | 월 수만원대 (파일럿 기준 추정) |
+
+> **주의**: 위 금액은 파일럿 기준 추정입니다. 실제 배포 전 Oracle Cloud Pricing Calculator로 재산정이 필요합니다. 리전, shape, 무료 티어 가능 여부, block storage, public IP, backup, traffic에 따라 달라집니다.
 
 > **주의**: 정확한 금액은 리전, 사양, 사용량에 따라 달라집니다.
 
@@ -563,11 +570,11 @@ Phase 3: staging + production (정식 운영)
 
 | 파일럿 가격 | 서버비 (월) | 수익성 |
 |------------|-----------|--------|
-| 100만~300만원 (첫 레퍼런스) | ~5만원 | 서버비는 미미 |
-| 300만~500만원 (표준 파일럿) | ~5만원 | 서버비는 미미 |
-| 월 구독 (정식 운영) | ~5만원 | 월 구독으로 커버 가능 |
+| 100만~300만원 (첫 레퍼런스) | 월 수만원대 (추정) | 서버비는 파일럿 가격 대비 작은 비중 |
+| 300만~500만원 (표준 파일럿) | 월 수만원대 (추정) | 서버비는 파일럿 가격 대비 작은 비중 |
+| 월 구독 (정식 운영) | 월 수만원대 (추정) | 월 구독으로 커버 가능 |
 
-**결론**: 서버비 자체는 파일럿 가격에 비해 크지 않습니다. 비용의 주요 부분은 인력(개발, 운영)입니다.
+**참고**: 서버비는 리전, 사양, 사용량에 따라 달라지므로 확정 금액이 아닙니다. 비용의 주요 부분은 서버비가 아니라 인력(개발, 운영)입니다.
 
 ### 추가 비용
 
@@ -591,7 +598,7 @@ Phase 3: staging + production (정식 운영)
 | **DB 복원 필요** | 백업에서 복원 (`bench restore`) | 높음 |
 | **SSL 만료** | certbot 갱신 (`certbot renew`) | 중간 |
 | **디스크 가득 참** | 불필요 파일 삭제, 볼륨 확장 | 높음 |
-| **AI provider 장애** | MockProvider fallback, degraded mode | 중간 |
+| **AI provider 장애** | cached summary / deterministic summary / degraded mode (MockProvider는 개발·테스트·데모용이며 운영에서 실제 업무 응답처럼 사용하지 않음) | 중간 |
 | **ERPNext 업데이트 실패** | 백업에서 복원, 업데이트 롤백 | 높음 |
 | **네트워크 장애** | OCI 네트워크 확인, 보안 그룹 확인 | 높음 |
 
