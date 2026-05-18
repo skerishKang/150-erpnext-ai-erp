@@ -101,8 +101,19 @@ class DeepSeekProvider(BaseAIProvider):
             )
 
     def _ensure_allowed(self) -> None:
-        """Verify config guard allows DeepSeek usage. Raises if not."""
-        from padiem_ai.ai.config import assert_provider_allowed
+        """Verify config guard allows DeepSeek usage. Raises if not.
+
+        Checks:
+        1. Master switch: PA_DIEM_ENABLE_EXTERNAL_AI
+        2. Provider flag: PA_DIEM_DEEPSEEK_ENABLED
+        3. Credential: PA_DIEM_DEEPSEEK_API_KEY
+        """
+        from padiem_ai.ai.config import assert_provider_allowed, is_external_ai_enabled
+        if not is_external_ai_enabled():
+            raise RuntimeError(
+                "External AI calls are disabled. "
+                "Set PA_DIEM_ENABLE_EXTERNAL_AI=true to allow external AI."
+            )
         assert_provider_allowed("deepseek")
 
     def _extract_text(self, response: dict) -> str:
