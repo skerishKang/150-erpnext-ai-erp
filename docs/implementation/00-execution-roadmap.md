@@ -60,4 +60,50 @@ Phase 6 (customer pilot)
 
 ## Current Position
 
-We are at the end of **Phase 0**. Phase 1 (ERPNext installation) is next.
+We have completed major foundation work through PRs #43, #45, and #47-#61. The project has completed major foundation work and should next validate CEO briefing/import compatibility before Phase 3-4 implementation.
+
+### Completed Work (Through PR #61)
+
+| PR | Description |
+|----|-------------|
+| #43 | DeepSeek enable guard / config status |
+| #45 | AGENTS.md coding rules + file-size guard |
+| #47-#61 | ERP read-only modular refactor |
+
+### ERP Read-Only Modular Refactor Details
+
+The `padiem_ai/erp/read_only.py` facade has been split into domain modules:
+
+| Module | Contents |
+|--------|----------|
+| `read_only_modules/utils.py` | `_count_records()`, `_safe_get_list()` |
+| `read_only_modules/sales.py` | `get_sales_summary()`, `get_quotation_summary()`, `get_delivery_summary()` |
+| `read_only_modules/inventory.py` | `get_inventory_summary()` |
+| `read_only_modules/purchasing.py` | `get_purchase_summary()` |
+| `read_only_modules/receivables.py` | `get_receivables_summary()`, `get_payment_summary()` |
+| `read_only_modules/context.py` | `get_ceo_briefing_context()` |
+
+**Key structure clarifications:**
+- `get_demo_counts()` remains in `read_only.py` (not moved)
+- `get_ceo_briefing_context()` moved to `read_only_modules/context.py`
+- Public import compatibility maintained via `read_only.py` facade re-export
+
+### DeepSeek Enable Guard Details
+
+- `DeepSeekProvider.health_check()` returns config status only (no external API calls)
+- Enable chain requires **all** of: external AI enable flag + DeepSeek enabled flag + configured credentials present
+- Default provider remains `mock` (not changed)
+- DeepSeek is structurally implemented behind guards, but external runtime use is not yet validated in this roadmap.
+
+### Next Priority Candidates
+
+1. **Roadmap/docs reconciliation completion**
+2. **CEO briefing smoke / import compatibility verification**
+3. **ERPNext runtime/data validation**
+4. **AI ERP demo flow** (voice → quotation → CEO briefing)
+5. **Oracle Cloud deployment planning**
+6. **First customer pilot/proposal path**
+
+### Historical Context
+
+The original roadmap referenced issues #1-#9, which are now completed/obsolete. Current work (PRs #43, #45, #47-#61) represents later phases that superseded those early tasks.
