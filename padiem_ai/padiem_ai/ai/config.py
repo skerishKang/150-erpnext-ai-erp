@@ -180,3 +180,44 @@ def assert_provider_allowed(provider_name: str) -> None:
         )
 
     raise ValueError(f"Provider '{provider_name}' is not allowed (status: {status['status']})")
+
+
+# -- DeepSeek-specific helpers ------------------------------------------------
+
+_DEEPSEEK_DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
+_DEEPSEEK_DEFAULT_MODEL = "deepseek-chat"
+
+
+def _get_deepseek_env_var(name: str) -> str:
+    """Read a DeepSeek config value from environment variables.
+
+    Returns empty string if not set. Never logs or exposes the value.
+    """
+    import os
+    return os.environ.get(name, "")
+
+
+def get_deepseek_config() -> dict:
+    """Get DeepSeek configuration from environment.
+
+    Expected env vars (documented only, never committed with values):
+        PA_DIEM_DEEPSEEK_API_KEY   — API key for DeepSeek
+        PA_DIEM_DEEPSEEK_BASE_URL  — override base URL (optional)
+        PA_DIEM_DEEPSEEK_MODEL     — model name (optional)
+
+    Returns:
+        dict with keys: api_key_present, base_url, model, external_call_allowed
+        api_key_present is bool (True if env var is non-empty)
+        base_url defaults to https://api.deepseek.com/v1
+        model defaults to deepseek-chat
+    """
+    api_key = _get_deepseek_env_var("PA_DIEM_DEEPSEEK_API_KEY")
+    base_url = _get_deepseek_env_var("PA_DIEM_DEEPSEEK_BASE_URL") or _DEEPSEEK_DEFAULT_BASE_URL
+    model = _get_deepseek_env_var("PA_DIEM_DEEPSEEK_MODEL") or _DEEPSEEK_DEFAULT_MODEL
+
+    return {
+        "api_key_present": bool(api_key),
+        "base_url": base_url,
+        "model": model,
+        "external_call_allowed": False,
+    }
