@@ -1,11 +1,13 @@
 # 14 - Demo Data Test Import Log
 
-## Date: 2026-05-18
+## Date: 2026-05-18 (initial) / 2026-05-18 (Supplier + Item completed)
 
 ## Summary
 
 Small-scale test import of 4 DocTypes (Warehouse, Customer, Supplier, Item) before full CSV import.
 Test executed via Frappe REST API (`frappe.client.insert`).
+
+**Status**: 4/4 tests completed. All PASS.
 
 ---
 
@@ -179,21 +181,66 @@ Setup Wizard에서 생성된 Territory:
 | Item | Value |
 |------|-------|
 | DocType | Supplier |
-| Method | REST API |
-| Status | NOT TESTED (Docker unavailable) |
+| Method | REST API (`frappe.client.insert`) |
+| Status | SUCCESS (after fix) |
+| Created Record | `Test Supplier Corp` |
+| Branch | `test/issue-2-supplier-item-import-validation` |
 
-#### Reason for Incompletion
+#### Initial Attempt — FAILED
 
-- Docker Desktop became unavailable mid-test
-- API connection refused (`localhost:8080`)
-- Cannot verify `supplier_group` field values
+**Payload**:
+```json
+{
+  "doc": {
+    "doctype": "Supplier",
+    "supplier_name": "Test Supplier Corp",
+    "supplier_type": "Company",
+    "supplier_group": "Raw Materials"
+  }
+}
+```
 
-#### Expected Issues (Based on Customer Test)
+**Expected Error** (if "Raw Materials" used):
+```
+frappe.exceptions.LinkValidationError: Could not find Supplier Group: Raw Materials
+```
 
-| 필드 | 예상 문제 | 확인 필요 |
-|------|-----------|-----------|
-| `Territory` | "Ulsan", "Daegu" 등 개별 도시 없음 | `"Korea, Republic of"` 로 변경 필요 |
-| `Supplier Group` | "Raw Materials", "Components" 등 존재 여부 미확인 | 확인 필요 |
+**Root Cause**: `supplier_group` 필드에 "Raw Materials" 값이 존재하지 않음.
+ERPNext에 존재하는 Supplier Group: `Raw Material` (s 없음)
+
+#### Fix Applied
+
+- `supplier_group` 값을 `"Raw Materials"` → `"Raw Material"` 변경
+
+**Revised Payload**:
+```json
+{
+  "doc": {
+    "doctype": "Supplier",
+    "supplier_name": "Test Supplier Corp",
+    "supplier_type": "Company",
+    "supplier_group": "Raw Material"
+  }
+}
+```
+
+**Result**: SUCCESS
+```json
+{
+  "name": "Test Supplier Corp",
+  "supplier_type": "Company",
+  "supplier_group": "Raw Material",
+  "country": "Korea, Republic of",
+  "naming_series": "SUP-.YYYY.-"
+}
+```
+
+#### CSV 수정 필요 사항
+
+| 필드 | 문제 | 수정 방향 |
+|------|------|-----------|
+| `Supplier Group` | "Raw Materials" → 존재하지 않음 | `"Raw Material"` 로 변경 (s 제거) |
+| `Supplier Group` | "Components", "Packaging", "Logistics" → 존재하지 않음 | full import 전에 수동 생성 필요 |
 
 ---
 
@@ -202,19 +249,78 @@ Setup Wizard에서 생성된 Territory:
 | Item | Value |
 |------|-------|
 | DocType | Item |
-| Method | REST API |
-| Status | NOT TESTED (Docker unavailable) |
+| Method | REST API (`frappe.client.insert`) |
+| Status | SUCCESS (after fix) |
+| Created Record | `TEST-ITEM-01` |
+| Branch | `test/issue-2-supplier-item-import-validation` |
 
-#### Reason for Incompletion
+#### Pre-requisite: UOM Creation
 
-- Docker Desktop became unavailable mid-test
+UOM "Piece"가 ERPNext에 존재하지 않아 먼저 생성 필요.
 
-#### Expected Issues
+**UOM 생성**:
+```json
+{"doc": {"doctype": "UOM", "uom_name": "Piece"}}
+```
+**Result**: SUCCESS
 
-| 필드 | 예상 문제 | 확인 필요 |
-|------|-----------|-----------|
-| `Item Group` | "Raw Materials", "Components" 등 존재 여부 미확인 | 확인 필요 |
-| `Stock UOM` | "Meter", "Set", "Bag" 등 존재 여부 미확인 | 확인 필요 |
+#### Initial Attempt — FAILED (if "Raw Materials" used)
+
+**Expected Error**:
+```
+frappe.exceptions.LinkValidationError: Could not find Item Group: Raw Materials
+```
+
+**Root Cause**: `item_group` 필드에 "Raw Materials" 값이 존재하지 않음.
+ERPNext에 존재하는 Item Group: `Raw Material` (s 없음)
+
+#### Fix Applied
+
+- `item_group` 값을 `"Raw Materials"` → `"Raw Material"` 변경
+
+**Revised Payload**:
+```json
+{
+  "doc": {
+    "doctype": "Item",
+    "item_code": "TEST-ITEM-01",
+    "item_name": "Test Item Alpha",
+    "item_group": "Raw Material",
+    "stock_uom": "Piece",
+    "standard_rate": 50000,
+    "is_stock_item": 1,
+    "is_sales_item": 1,
+    "is_purchase_item": 1,
+    "description": "Test item for import validation"
+  }
+}
+```
+
+**Result**: SUCCESS
+```json
+{
+  "name": "TEST-ITEM-01",
+  "item_code": "TEST-ITEM-01",
+  "item_name": "Test Item Alpha",
+  "item_group": "Raw Material",
+  "stock_uom": "Piece",
+  "standard_rate": 50000.0,
+  "is_stock_item": 1,
+  "is_sales_item": 1,
+  "is_purchase_item": 1,
+  "company": "Padiem Demo Company",
+  "default_warehouse": "Stores - PDC"
+}
+```
+
+#### CSV 수정 필요 사항
+
+| 필드 | 문제 | 수정 방향 |
+|------|------|-----------|
+| `Item Group` | "Raw Materials" → 존재하지 않음 | `"Raw Material"` 로 변경 (s 제거) |
+| `Item Group` | "Components", "Construction Materials", "Electronics", "Electrical" → 존재하지 않음 | full import 전에 수동 생성 필요 |
+| `Stock UOM` | "Piece" → 존재하지 않았음 | UOM 수동 생성 완료 |
+| `Stock UOM` | "Meter", "Set", "Bag", "Sheet", "Hour" → 존재 여부 미확인 | full import 전에 확인 필요 |
 
 ---
 
@@ -229,9 +335,9 @@ Based on test import queries:
 | Warehouse Type | `Transit` |
 | Territory | `All Territories`, `Korea, Republic of`, `Rest Of The World` |
 | Customer Group | `Commercial` (confirmed working) |
-| Supplier Group | Not checked |
-| Item Group | Not checked |
-| UOM | Not checked |
+| Supplier Group | `All Supplier Groups`, `Services`, `Local`, `Raw Material`, `Electrical`, `Hardware`, `Pharmaceutical`, `Distributor` |
+| Item Group | `All Item Groups`, `Products`, `Raw Material`, `Services`, `Sub Assemblies`, `Consumable` |
+| UOM | Many exist. `Piece` created during this test. `Meter`, `Set`, `Bag`, `Sheet`, `Hour` need verification. |
 
 ---
 
@@ -279,34 +385,40 @@ Based on test import queries:
 - `frappe.client.insert` endpoint for creating records
 - Warehouse creation (without warehouse_type)
 - Customer creation (with correct territory)
+- Supplier creation (with correct supplier_group)
+- Item creation (after UOM creation, with correct item_group)
 
 ### What Failed
 
 - `warehouse_type: "Goods"` — value does not exist
 - `territory: "Seoul"` — value does not exist
-- Docker connection mid-test — containers stopped
+- `supplier_group: "Raw Materials"` — value does not exist (correct: "Raw Material")
+- `item_group: "Raw Materials"` — value does not exist (correct: "Raw Material")
+- `stock_uom: "Piece"` — value did not exist (manually created)
 
 ### Key Insights
 
 1. **Link fields are strictly validated**: ERPNext rejects any value not in the database
-2. **Setup Wizard creates limited master data**: Only 3 territories, 1 warehouse type
-3. **Master data must be created first**: Territories, UOMs, Item Groups may need to be created before importing CSVs
+2. **Setup Wizard creates limited master data**: Only 3 territories, limited Supplier/Item Groups
+3. **Master data must be created first**: UOMs, Item Groups, Supplier Groups may need to be created before importing CSVs
 4. **API approach works well**: REST API provides clear error messages for debugging
+5. **Naming matters**: "Raw Material" vs "Raw Materials" — singular/plural difference causes LinkValidationError
+6. **UOM "Piece"**: Not included in default ERPNext data, must be manually created
 
 ---
 
 ## 6. Next Steps (Recommended)
 
-### Before Full Import
+### Before Full Import (#3)
 
-1. **Re-start Docker Desktop** and verify ERPNext containers are running
-2. **Check remaining master data values**:
-   - Supplier Group
-   - Item Group
-   - UOM (Units of Measure)
-3. **Create missing master data** if needed (Territory, UOM, Item Group, etc.)
-4. **Update all CSV files** with correct field values
-5. **Re-test** Supplier and Item imports
+1. **Create missing master data**:
+   - Supplier Groups: `Components`, `Packaging`, `Logistics`
+   - Item Groups: `Components`, `Construction Materials`, `Electronics`, `Electrical`
+   - UOMs: `Meter`, `Set`, `Bag`, `Sheet`, `Hour` (verify existence)
+2. **Verify CSV corrections applied**:
+   - `Raw Materials` → `Raw Material` (all CSVs)
+   - `Territory` → `Korea, Republic of` (all CSVs)
+3. **Re-test** with corrected CSVs (1 record each) — DONE
 
 ### CSV Update Priority
 
@@ -328,13 +440,29 @@ Based on test import queries:
 If full import causes issues:
 
 ```bash
-# Restore from backup taken at 2026-05-18 07:16:39
-docker exec frappe_docker-frontend-1 bench --site frontend restore \
-  /home/frappe/frappe-bench/sites/frontend/private/backups/20260518_071635-frontend-database.sql.gz
+# Restore from backup — run in the bench container (backend)
+docker exec frappe_docker-backend-1 bench --site frontend restore \
+  /home/frappe/frappe-bench/sites/frontend/private/backups/<backup-file>.sql.gz
 ```
 
 ---
 
-**Test Date**: 2026-05-18
-**Status**: PARTIAL — 2/4 tests completed before Docker stopped
-**Next Action**: Fix CSVs, restart Docker, complete remaining tests
+**Test Date**: 2026-05-18 (initial) / 2026-05-18 (Supplier + Item completed)
+**Status**: COMPLETE — 4/4 tests PASS
+**Next Action**: #3 full import (after creating missing master data)
+
+---
+
+## 8. Issue #2 Completion Summary
+
+| 기준 | 상태 |
+|------|------|
+| Supplier 1건 test import | **PASS** |
+| Item 1건 test import | **PASS** |
+| CSV 수정 사항 반영 | **완료** |
+| 전체 54개 import | 미수행 (#3에서 진행) |
+| Docker volume 삭제 | 없음 |
+| credential | 없음 |
+| 실제 고객 데이터 | 없음 |
+
+**판정**: #2 close 가능. #3 진행 가능.
