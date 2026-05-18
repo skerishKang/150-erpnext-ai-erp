@@ -6,9 +6,11 @@ This document defines file-size thresholds and module organization rules for the
 
 | Lines | Status | Action Required |
 |-------|--------|-----------------|
-| 500+ | **BLOCKER** | Must split before merge |
-| 350-499 | **WARNING** | PR must justify why not split |
-| 250-349 | **REVIEW** | Frequent changes trigger module review |
+| >500 | **BLOCKER** | Must split before merge |
+| 351-500 | **WARNING** | PR must justify why not split |
+| 251-350 | **REVIEW** | Frequent changes trigger module review |
+
+> Note: The check script uses `lines > max_lines` as the failure condition, so files up to and including 500 lines pass.
 
 ## App-Owned Code Scope
 

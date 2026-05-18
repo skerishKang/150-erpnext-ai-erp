@@ -38,16 +38,25 @@ def parse_args():
     return parser.parse_args()
 
 
-# Patterns to exclude
+# Directories to exclude
 EXCLUDE_DIRS = {
     ".git", "node_modules", "env", ".venv", "sites", "frappe", "erpnext",
     "__pycache__", ".tox", ".pytest_cache", "build", "dist", ".eggs",
 }
 
-EXCLUDE_EXTENSIONS = {
-    ".pyc", ".pyo", ".min.js", ".min.css", ".map", ".bundle.js",
+# Extension whitelist - only these source/code/text files are checked
+INCLUDE_EXTENSIONS = {
+    ".py", ".js", ".css", ".html", ".md", ".txt",
 }
 
+# Extensions to exclude (binary, image, data files)
+EXCLUDE_EXTENSIONS = {
+    ".json", ".csv", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico",
+    ".svg", ".pdf", ".zip", ".gz", ".db", ".sqlite", ".pyc", ".pyo",
+    ".min.js", ".min.css", ".map", ".bundle.js",
+}
+
+# Path patterns to exclude (secret, env, config, data files)
 EXCLUDE_PATTERNS = [
     ".env", "site_config", "password", "secret", "key", "token",
     "backup", "fixture", "demo",
@@ -63,8 +72,12 @@ def should_exclude(path: str) -> bool:
         if part in EXCLUDE_DIRS:
             return True
     
-    # Check extension exclusion
+    # Check extension - must be in whitelist to be included
     _, ext = os.path.splitext(path)
+    if ext.lower() not in INCLUDE_EXTENSIONS:
+        return True
+    
+    # Check binary/data exclusion
     if ext.lower() in EXCLUDE_EXTENSIONS:
         return True
     
