@@ -21,6 +21,33 @@ from padiem_ai.erp.read_only_modules.receivables import (
 )
 
 
+def get_demo_counts() -> dict:
+    """Get record counts for all demo DocTypes using frappe.get_list.
+
+    Returns:
+        dict: DocType name -> record count
+    """
+    doctypes = [
+        "Customer",
+        "Supplier",
+        "Item",
+        "Quotation",
+        "Sales Order",
+        "Purchase Order",
+        "Stock Entry",
+        "Delivery Note",
+        "Sales Invoice",
+        "Payment Entry",
+        "Warehouse",
+    ]
+
+    counts = {}
+    for dt in doctypes:
+        counts[dt] = _count_records(dt)
+
+    return counts
+
+
 def get_ceo_briefing_context() -> dict:
     """Get structured context for CEO Daily Briefing.
 
