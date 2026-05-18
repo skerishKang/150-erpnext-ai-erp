@@ -252,6 +252,139 @@ _DEEPSEEK_DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
 _DEEPSEEK_DEFAULT_MODEL = "deepseek-chat"
 
 
+def _is_private_or_blocked_ip(host: str) -> bool:
+    """Check if host is a private or blocked IP address."""
+    import ipaddress
+
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+
+    if ip.is_loopback:
+        return True
+    if ip.is_unspecified:
+        return True
+    if ip.is_link_local:
+        return True
+
+    if ip.is_private:
+        return True
+
+    if str(ip) == "169.254.169.254":
+        return True
+
+    return False
+
+
+def _is_blocked_hostname(host: str) -> bool:
+    """Check if hostname is a blocked string variant."""
+    if not host:
+        return True
+
+    host_lower = host.lower()
+
+    if host_lower in ("localhost", "0", "127.0.0.1"):
+        return True
+
+    if host_lower.endswith(".localhost") or host_lower.endswith(".local"):
+        return True
+
+    if host_lower == "::1":
+        return True
+
+    return False
+
+
+def validate_deepseek_base_url(base_url: str) -> str:
+    """Validate and normalize DeepSeek base URL.
+
+    Allows:
+    - https://api.deepseek.com/v1 (default)
+    - https://api.deepseek.com/v1/ (normalized)
+    - Custom host only with PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL=true
+
+    Blocks:
+    - http:// (https only)
+    - localhost, 127.0.0.1, ::1, and string variants
+    - private IP ranges (10.x, 172.16-31.x, 192.168.x)
+    - link-local (169.254.x)
+    - metadata IP (169.254.169.254)
+    - Empty host, userinfo, query, fragment
+    - Non-443 ports
+    - Non-/v1 paths
+
+    Args:
+        base_url: Base URL to validate
+
+    Returns:
+        str: Validated and normalized URL
+
+    Raises:
+        ValueError: If URL is blocked
+    """
+    from urllib.parse import urlparse
+
+    if not base_url:
+        raise ValueError("DeepSeek base URL cannot be empty")
+
+    parsed = urlparse(base_url)
+
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Invalid scheme: {parsed.scheme}. Only https allowed.")
+
+    if parsed.scheme == "http":
+        raise ValueError("HTTP is not allowed. Use HTTPS only.")
+
+    if parsed.username or parsed.password:
+        raise ValueError("URL with userinfo (username/password) is not allowed.")
+
+    if parsed.query:
+        raise ValueError("URL with query string is not allowed.")
+
+    if parsed.fragment:
+        raise ValueError("URL with fragment is not allowed.")
+
+    host = parsed.hostname
+    if not host:
+        raise ValueError("Host cannot be empty")
+
+    if parsed.port is not None and parsed.port != 443:
+        raise ValueError(f"Port {parsed.port} is not allowed. Only port 443 or no port.")
+
+    if _is_private_or_blocked_ip(host) or _is_blocked_hostname(host):
+        raise ValueError(f"Blocked host: {host}. Private/localhost/metadata IPs not allowed.")
+
+    path = parsed.path.rstrip("/")
+    allowed_paths = ("", "/v1")
+    if path not in allowed_paths:
+        raise ValueError(f"Path '{parsed.path}' is not allowed. Only /v1 or no path.")
+
+    default_host = "api.deepseek.com"
+    if host != default_host:
+        if not _get_env_bool("PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL"):
+            raise ValueError(
+                f"Custom host '{host}' requires "
+                f"PA_DIEM_ALLOW_CUSTOM_DEEPSEEK_BASE_URL=true"
+            )
+
+    normalized = f"https://{host}/v1"
+    return normalized
+
+
+def get_validated_deepseek_base_url() -> str:
+    """Get validated DeepSeek base URL from env or default.
+
+    Returns:
+        str: Validated base URL (always https)
+
+    Raises:
+        ValueError: If configured URL is invalid
+    """
+    raw_url = _get_env_str("PA_DIEM_DEEPSEEK_BASE_URL") or _DEEPSEEK_DEFAULT_BASE_URL
+    return validate_deepseek_base_url(raw_url)
+
+
 def get_deepseek_config() -> dict:
     """Get DeepSeek configuration from environment.
 
@@ -263,12 +396,15 @@ def get_deepseek_config() -> dict:
     Returns:
         dict with keys: api_key_present, base_url, model, external_call_allowed
         api_key_present is bool (True if env var is non-empty)
-        base_url defaults to https://api.deepseek.com/v1
+        base_url defaults to https://api.deepseek.com/v1 (validated)
         model defaults to deepseek-chat
         external_call_allowed requires both PA_DIEM_ENABLE_EXTERNAL_AI and PA_DIEM_DEEPSEEK_ENABLED
+
+    Raises:
+        ValueError: If PA_DIEM_DEEPSEEK_BASE_URL is invalid
     """
     api_key = _get_env_str("PA_DIEM_DEEPSEEK_API_KEY")
-    base_url = _get_env_str("PA_DIEM_DEEPSEEK_BASE_URL") or _DEEPSEEK_DEFAULT_BASE_URL
+    base_url = get_validated_deepseek_base_url()
     model = _get_env_str("PA_DIEM_DEEPSEEK_MODEL") or _DEEPSEEK_DEFAULT_MODEL
 
     return {
