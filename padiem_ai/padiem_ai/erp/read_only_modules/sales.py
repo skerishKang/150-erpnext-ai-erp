@@ -6,7 +6,6 @@ Contains get_sales_summary, get_quotation_summary, and get_delivery_summary.
 
 from padiem_ai.erp.read_only_modules.utils import (
     _safe_count_records,
-    _safe_get_list,
     _safe_sum_field,
 )
 
@@ -53,17 +52,11 @@ def get_quotation_summary() -> dict:
     """
     warnings = []
 
-    quotations, err = _safe_get_list(
-        "Quotation",
-        fields=["name", "party_name", "transaction_date", "valid_till", "grand_total", "status"],
-    )
-    if err:
-        warnings.append(err)
-
-    total_quoted = sum(q.get("grand_total", 0) for q in quotations)
+    quotation_count = _safe_count_records("Quotation")
+    total_quoted = _safe_sum_field("Quotation", "grand_total")
 
     return {
-        "quotation_count": len(quotations),
+        "quotation_count": quotation_count,
         "total_quoted_value": total_quoted,
     }, warnings
 
@@ -76,13 +69,8 @@ def get_delivery_summary() -> dict:
     """
     warnings = []
 
-    delivery_notes, err = _safe_get_list(
-        "Delivery Note",
-        fields=["name", "customer", "posting_date", "docstatus"],
-    )
-    if err:
-        warnings.append(err)
+    delivery_note_count = _safe_count_records("Delivery Note")
 
     return {
-        "delivery_note_count": len(delivery_notes),
+        "delivery_note_count": delivery_note_count,
     }, warnings
