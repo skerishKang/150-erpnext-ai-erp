@@ -5,8 +5,9 @@ Contains get_receivables_summary and get_payment_summary.
 """
 
 from padiem_ai.erp.read_only_modules.utils import (
+    DEFAULT_READ_ONLY_LIMIT,
     _safe_count_records,
-    _safe_get_list,
+    _safe_get_list_limited,
     _safe_sum_field,
 )
 
@@ -19,18 +20,31 @@ def get_receivables_summary() -> dict:
     """
     warnings = []
 
-    invoices, err = _safe_get_list(
+    outstanding_filters = {"outstanding_amount": (">", 0)}
+
+    outstanding_invoice_count = _safe_count_records(
         "Sales Invoice",
-        filters={"outstanding_amount": (">", 0)},
+        filters=outstanding_filters,
+    )
+
+    total_outstanding = _safe_sum_field(
+        "Sales Invoice",
+        "outstanding_amount",
+        filters=outstanding_filters,
+    )
+
+    invoices, err = _safe_get_list_limited(
+        "Sales Invoice",
+        filters=outstanding_filters,
         fields=["name", "customer", "outstanding_amount", "due_date", "posting_date"],
+        limit=DEFAULT_READ_ONLY_LIMIT,
+        order_by="due_date asc",
     )
     if err:
         warnings.append(err)
 
-    total_outstanding = sum(inv.get("outstanding_amount", 0) for inv in invoices)
-
     return {
-        "outstanding_invoice_count": len(invoices),
+        "outstanding_invoice_count": outstanding_invoice_count,
         "total_outstanding": total_outstanding,
         "invoices": invoices,
     }, warnings
