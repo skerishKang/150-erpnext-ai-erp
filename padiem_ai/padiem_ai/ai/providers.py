@@ -126,6 +126,13 @@ class DeepSeekProvider(BaseAIProvider):
         except (KeyError, IndexError, TypeError):
             return ""
 
+    def _build_summary_prompt(self, context: dict, prompt_template: str = "") -> str:
+        """Build a summary prompt that always includes the supplied context."""
+        context_text = str(context)
+        if prompt_template:
+            return f"{prompt_template}\n\nContext:\n{context_text}"
+        return context_text
+
     def generate_text(self, prompt: str, context: dict, options: dict = None) -> str:
         """Generate text via DeepSeek. Blocked by config guard if not enabled."""
         self._ensure_allowed()
@@ -159,7 +166,7 @@ class DeepSeekProvider(BaseAIProvider):
 
     def summarize(self, context: dict, prompt_template: str = "") -> str:
         """Summarize context via DeepSeek. Blocked by config guard if not enabled."""
-        prompt = prompt_template or str(context)
+        prompt = self._build_summary_prompt(context, prompt_template)
         return self.generate_text(prompt, context)
 
     def health_check(self) -> dict:
