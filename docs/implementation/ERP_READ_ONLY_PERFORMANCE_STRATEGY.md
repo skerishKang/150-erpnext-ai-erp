@@ -32,7 +32,7 @@ The existing read-only helper functions use `limit_page_length=0` in `frappe.get
 | `get_inventory_summary()` | `inventory.py` | 2x `_safe_get_list()` | Medium |
 | `get_purchase_summary()` | `purchasing.py` | 1x `_safe_get_list()` | Medium |
 | `get_receivables_summary()` | `receivables.py` | 1x `_safe_get_list()` | **High** — returns full invoice detail list |
-| `get_payment_summary()` | `payments.py` | 1x `_safe_get_list()` | Medium |
+| `get_payment_summary()` | `receivables.py` | 1x `_safe_get_list()` | Medium |
 | `get_ceo_briefing_context()` | `context.py` | 7x domain summary orchestration | **High** — aggregates all risks |
 
 ---
@@ -41,20 +41,20 @@ The existing read-only helper functions use `limit_page_length=0` in `frappe.get
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Public function signatures   → NEVER change              │
-│ Return shapes                → PRESERVE when possible    │
-│ ERPNext / Frappe core        → DO NOT modify             │
-│ Demo data                    → DO NOT modify             │
-│ External AI calls            → DISABLED                  │
-│ Full-table list fetch        → AVOID as default strategy │
-│ Top-N detail + aggregate     → PREFERRED pattern         │
+│ Public function signatures          → NEVER change       │
+│ Existing public keys/value types    → PRESERVE           │
+│ ERPNext / Frappe core               → DO NOT modify      │
+│ Demo data                           → DO NOT modify      │
+│ External AI calls                   → DISABLED           │
+│ Full-table list fetch               → AVOID by default   │
+│ Top-N detail + aggregate            → PREFERRED pattern  │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### Guiding Rules
 
-1. **Signature stability first** — all existing `get_*()` functions keep their signature and return shape. Additive metadata fields (e.g., `truncated`, `limit`, `total_available`) may be added to return dicts without breaking consumers.
-2. **Separate detail from aggregate** — full-record details (like `receivables.invoices`) should be limited; aggregate counts/sums should use efficient SQL aggregation.
+1. **Signature and return-contract stability first** — all existing `get_*()` functions keep their signatures. Existing public keys and value types must remain unchanged. Additive metadata fields (e.g., `truncated`, `limit`, `total_available`) are not added by default; they require an explicit follow-up issue, compatibility review, and approval before implementation.
+2. **Separate detail from aggregate** — full-record details (like `receivables.invoices`) should be limited only through a compatibility-safe strategy; aggregate counts/sums should use efficient SQL aggregation.
 3. **Count via `frappe.db.count()`** — replace `len(frappe.get_list(…))` with dedicated count query when possible.
 4. **Phased rollout** — each change has its own issue/PR with clear compatibility guarantees.
 
@@ -95,7 +95,7 @@ def _safe_sum_field(doctype: str, field: str, filters: dict = None) -> float:
 
 | Current Field | Proposal | Compatibility |
 |---------------|----------|---------------|
-| `receivables.invoices` (full list) | `receivables.invoices` (top-N, + `invoices_truncated` bool) | Additive — `bool` key added |
+| `receivables.invoices` (full list) | Preserve `invoices` key and existing invoice item fields; future top-N limiting must keep the list type | Existing key/type preserved; truncation metadata only after compatibility review |
 | `sales.submitted_invoice_count` | Same field, computed via `_safe_count_records()` | Identical shape |
 | `sales.total_invoiced` | Same field, computed via `_safe_sum_field()` | Identical shape |
 | `payments.payment_count` | Same field, computed via `_safe_count_records()` | Identical shape |
@@ -144,7 +144,7 @@ def _safe_sum_field(doctype: str, field: str, filters: dict = None) -> float:
 | A | Add `_safe_count_records()` and `_safe_sum_field()` to `utils.py` | New helpers, no call site changes |
 | B | Add `_safe_get_list_limited()` with `DEFAULT_READ_ONLY_LIMIT` | Bounded list helper |
 | C | Migrate `_count_records()` call sites to `_safe_count_records()` | Sales, receivables, context |
-| D | Convert `get_receivables_summary()` to top-N invoice detail | Breaks existing invoice list shape? |
+| D | Convert `get_receivables_summary()` to top-N invoice detail | Preserve `invoices` key; add truncation metadata only after compatibility review |
 | E | Convert `get_sales_summary()` to use aggregation helpers | Same shape, efficient queries |
 | F | Convert `get_purchase_summary()`, `get_quotation_summary()`, `get_delivery_summary()` | Same shape |
 | G | Convert `get_payment_summary()`, `get_inventory_summary()` | Same shape |
@@ -172,5 +172,5 @@ def _safe_sum_field(doctype: str, field: str, filters: dict = None) -> float:
 | Affected functions | 10 functions across read-only modules |
 | Strategy | Bounded queries + aggregation helpers + top-N details |
 | Implementation phases | 4 phases (Doc → Helpers → Migration → Validation) |
-| Return shape stability | Preserved; additive metadata fields only |
+| Return shape stability | Existing public keys/value types preserved; additive metadata requires explicit follow-up approval |
 | This PR | **Documentation only** — zero runtime changes |
