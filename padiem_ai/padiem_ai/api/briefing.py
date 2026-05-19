@@ -14,18 +14,15 @@ from padiem_ai.ai.config import (
 )
 from padiem_ai.ai.registry import get_provider
 from padiem_ai.briefing.mock_generator import generate_mock_ceo_briefing
+from padiem_ai.erp.permissions import require_ceo_briefing_read_permission
 from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts
-from padiem_ai.erp.read_only_modules.constants import CEO_BRIEFING_READ_DOCTYPES
 
 
-def _require_ceo_briefing_read_permission():
-    """Check that the current user has read permission on all CEO briefing DocTypes.
-
-    Verifies read access to every ERP DocType included in the briefing context.
-    An exception is raised for the first DocType the user cannot read.
-    """
-    for doctype in CEO_BRIEFING_READ_DOCTYPES:
-        frappe.has_permission(doctype, "read", throw=True)
+def _without_raw_context(briefing: dict) -> dict:
+    """Return briefing without duplicated raw ERP context."""
+    if not isinstance(briefing, dict):
+        return briefing
+    return {key: value for key, value in briefing.items() if key != "raw_context"}
 
 
 @frappe.whitelist()
@@ -44,13 +41,13 @@ def get_ceo_briefing():
 
     Read-only access. No data modification. No external AI calls.
     """
-    _require_ceo_briefing_read_permission()
+    require_ceo_briefing_read_permission()
 
     # Step 1: Read ERP data
     context = get_ceo_briefing_context()
 
     # Step 2: Generate deterministic briefing
-    briefing = generate_mock_ceo_briefing(context)
+    briefing = _without_raw_context(generate_mock_ceo_briefing(context))
 
     # Step 3: Get selected provider and enforce config guard
     provider_name = get_selected_provider_name()
@@ -93,7 +90,7 @@ def get_counts():
     Returns record counts for all demo DocTypes.
     Read-only access. Permission check covers all briefing DocTypes.
     """
-    _require_ceo_briefing_read_permission()
+    require_ceo_briefing_read_permission()
 
     counts = get_demo_counts()
 
