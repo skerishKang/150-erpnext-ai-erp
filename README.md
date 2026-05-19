@@ -16,13 +16,27 @@ It is built on ERPNext and enhanced with AI capabilities embedded directly insid
 
 ## Current Phase
 
-Documentation architecture and agent indexing.
-No application code or ERPNext installation yet.
+Padiem AI ERP has moved beyond documentation-only planning into an early ERPNext app/runtime implementation phase.
+
+The repository now includes:
+
+- `padiem_ai/` application code
+- AI provider configuration with mock as the safe default
+- Config-gated DeepSeek provider implementation
+- ERP read-only summary modules for CEO briefing context
+- Documentation, implementation plans, and agent instructions
+
+External AI calls are disabled by default and require explicit configuration.
+The mock provider remains the default safe provider for development and testing.
+
+ERPNext/Frappe runtime smoke tests require a prepared bench/site environment.
+Static validation for the read-only performance migration has been completed, but runtime validation should be performed in an actual ERPNext environment.
 
 ## Folder Guide
 
 | Folder | Purpose |
 |--------|---------|
+| `padiem_ai/` | ERPNext app/runtime code, AI provider layer, and read-only ERP modules |
 | `docs/` | All project documentation |
 | `docs/agents/` | Agent instruction system (start here for AI agents) |
 | `docs/product/` | Product specs and requirements |
