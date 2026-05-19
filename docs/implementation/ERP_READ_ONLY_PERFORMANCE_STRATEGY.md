@@ -1,8 +1,8 @@
 # ERP Read-Only Performance Strategy
 
-**Target Modules:** `padiem_ai/padiem_ai/erp/read_only_modules/`  
-**Issue:** #65  
-**Date:** 2026-05-19  
+**Target Modules:** `padiem_ai/padiem_ai/erp/read_only_modules/`
+**Issue:** #65
+**Date:** 2026-05-19
 **Status:** Design phase — no runtime code changes
 
 ---
