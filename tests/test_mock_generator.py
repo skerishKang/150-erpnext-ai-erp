@@ -1,5 +1,7 @@
 """Tests for the deterministic CEO briefing generator."""
 
+import unittest
+
 from frappe_stub import ensure_app_path
 
 ensure_app_path()
@@ -31,27 +33,30 @@ def _sample_context():
     }
 
 
-def test_format_currency_krw_handles_invalid_values():
-    assert format_currency_krw(108800000) == "108,800,000원"
-    assert format_currency_krw(None) == "0원"
-    assert format_currency_krw("not-a-number") == "0원"
+class MockGeneratorTests(unittest.TestCase):
+    def test_format_currency_krw_handles_invalid_values(self):
+        self.assertEqual(format_currency_krw(108800000), "108,800,000원")
+        self.assertEqual(format_currency_krw(None), "0원")
+        self.assertEqual(format_currency_krw("not-a-number"), "0원")
+
+    def test_format_count_handles_invalid_values(self):
+        self.assertEqual(format_count(3, "건"), "3건")
+        self.assertEqual(format_count(None, "건"), "0건")
+        self.assertEqual(format_count("not-a-number", "건"), "0건")
+
+    def test_generate_mock_ceo_briefing_shape(self):
+        briefing = generate_mock_ceo_briefing(_sample_context())
+
+        self.assertEqual(briefing["title"], "CEO Daily Briefing")
+        self.assertIn("summary", briefing)
+        self.assertIsInstance(briefing["sections"], list)
+        self.assertEqual(len(briefing["sections"]), 5)
+        self.assertEqual(briefing["raw_context"], _sample_context())
+
+        section_titles = [section["title"] for section in briefing["sections"]]
+        self.assertIn("매출 현황", section_titles)
+        self.assertIn("주의 사항", section_titles)
 
 
-def test_format_count_handles_invalid_values():
-    assert format_count(3, "건") == "3건"
-    assert format_count(None, "건") == "0건"
-    assert format_count("not-a-number", "건") == "0건"
-
-
-def test_generate_mock_ceo_briefing_shape():
-    briefing = generate_mock_ceo_briefing(_sample_context())
-
-    assert briefing["title"] == "CEO Daily Briefing"
-    assert "summary" in briefing
-    assert isinstance(briefing["sections"], list)
-    assert len(briefing["sections"]) == 5
-    assert briefing["raw_context"] == _sample_context()
-
-    section_titles = [section["title"] for section in briefing["sections"]]
-    assert "매출 현황" in section_titles
-    assert "주의 사항" in section_titles
+if __name__ == "__main__":
+    unittest.main()
