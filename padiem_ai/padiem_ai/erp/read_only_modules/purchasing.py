@@ -4,7 +4,10 @@ Extracted from read_only.py as part of the purchasing-domain split (Issue #54).
 Contains get_purchase_summary.
 """
 
-from padiem_ai.erp.read_only_modules.utils import _safe_get_list
+from padiem_ai.erp.read_only_modules.utils import (
+    _safe_count_records,
+    _safe_sum_field,
+)
 
 
 def get_purchase_summary() -> dict:
@@ -15,16 +18,10 @@ def get_purchase_summary() -> dict:
     """
     warnings = []
 
-    purchase_orders, err = _safe_get_list(
-        "Purchase Order",
-        fields=["grand_total", "supplier", "status"],
-    )
-    if err:
-        warnings.append(err)
-
-    total_po = sum(po.get("grand_total", 0) for po in purchase_orders)
+    purchase_order_count = _safe_count_records("Purchase Order")
+    total_po = _safe_sum_field("Purchase Order", "grand_total")
 
     return {
-        "purchase_order_count": len(purchase_orders),
+        "purchase_order_count": purchase_order_count,
         "total_purchase_order_value": total_po,
     }, warnings
