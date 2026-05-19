@@ -1,0 +1,38 @@
+name: Static Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  py-compile:
+    name: Python syntax validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile padiem_ai Python files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import py_compile
+
+          root = Path('padiem_ai/padiem_ai')
+          files = sorted(root.rglob('*.py'))
+          if not files:
+              raise SystemExit('No Python files found under padiem_ai/padiem_ai')
+
+          for path in files:
+              py_compile.compile(str(path), doraise=True)
+
+          print(f'Compiled {len(files)} Python files')
+          PY
