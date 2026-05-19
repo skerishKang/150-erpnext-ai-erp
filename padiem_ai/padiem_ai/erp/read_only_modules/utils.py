@@ -43,4 +43,4 @@ def _safe_get_list(doctype: str, fields: list = None, filters: dict = None) -> t
             title=f"Read-only ERP query failed: {doctype}",
             message=frappe.get_traceback(),
         )
-        return [], f"{doctype} 조회 실패: {str(exc)}"
+        return [], f"{doctype} 데이터를 불러오지 못했습니다"
