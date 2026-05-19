@@ -2,6 +2,11 @@
 
 Extracted from read_only.py as part of the inventory-domain split (Issue #52).
 Contains get_inventory_summary.
+
+Record policy:
+- Item totals and stock item counts are all-record catalog summaries.
+- Stock Entry count remains an all-record operational summary until a
+  runtime/product decision narrows it to submitted records.
 """
 
 from padiem_ai.erp.read_only_modules.utils import _safe_count_records
