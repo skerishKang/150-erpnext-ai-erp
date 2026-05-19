@@ -9,12 +9,10 @@ app_email = "noreply@padiem.co.kr"
 app_license = "MIT"
 
 # Includes
-app_include_js = [
-    "/assets/padiem_ai/js/padiem_dashboard.js"
-]
-app_include_css = [
-    "/assets/padiem_ai/css/padiem_dashboard.css"
-]
+# Dashboard assets are intentionally not loaded globally until a real dashboard
+# page requires them. Keep placeholder assets out of every ERPNext page.
+app_include_js = []
+app_include_css = []
 
 # Fixtures
 fixtures = []
