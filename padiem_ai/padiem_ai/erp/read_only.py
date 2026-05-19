@@ -7,7 +7,7 @@ Respects ERPNext permissions.
 No external AI API calls. No credentials stored or referenced.
 """
 
-from .read_only_modules.utils import _count_records
+from .read_only_modules.utils import _safe_count_records
 from .read_only_modules.constants import DEMO_COUNT_DOCTYPES
 from .read_only_modules.sales import (
     get_sales_summary,
@@ -31,6 +31,6 @@ def get_demo_counts() -> dict:
     """
     counts = {}
     for dt in DEMO_COUNT_DOCTYPES:
-        counts[dt] = _count_records(dt)
+        counts[dt] = _safe_count_records(dt)
 
     return counts
