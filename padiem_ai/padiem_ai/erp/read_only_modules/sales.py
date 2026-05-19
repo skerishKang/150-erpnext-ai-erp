@@ -4,7 +4,11 @@ Extracted from read_only.py as part of the sales-domain split (Issue #50).
 Contains get_sales_summary, get_quotation_summary, and get_delivery_summary.
 """
 
-from padiem_ai.erp.read_only_modules.utils import _safe_get_list
+from padiem_ai.erp.read_only_modules.utils import (
+    _safe_count_records,
+    _safe_get_list,
+    _safe_sum_field,
+)
 
 
 def get_sales_summary() -> dict:
@@ -15,39 +19,28 @@ def get_sales_summary() -> dict:
     """
     warnings = []
 
-    submitted_invoices, err = _safe_get_list(
-        "Sales Invoice",
-        filters={"docstatus": 1},
-        fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
+    submitted_invoice_count = _safe_count_records(
+        "Sales Invoice", filters={"docstatus": 1}
     )
-    if err:
-        warnings.append(err)
-
-    draft_invoices, err = _safe_get_list(
-        "Sales Invoice",
-        filters={"docstatus": 0},
-        fields=["grand_total", "outstanding_amount", "customer", "posting_date"],
+    draft_invoice_count = _safe_count_records(
+        "Sales Invoice", filters={"docstatus": 0}
     )
-    if err:
-        warnings.append(err)
+    sales_order_count = _safe_count_records("Sales Order")
 
-    sales_orders, err = _safe_get_list(
-        "Sales Order",
-        fields=["grand_total", "customer", "delivery_date", "status"],
+    total_invoiced = _safe_sum_field(
+        "Sales Invoice", "grand_total", filters={"docstatus": 1}
     )
-    if err:
-        warnings.append(err)
-
-    total_invoiced = sum(inv.get("grand_total", 0) for inv in submitted_invoices)
-    total_outstanding = sum(inv.get("outstanding_amount", 0) for inv in submitted_invoices)
-    total_so = sum(so.get("grand_total", 0) for so in sales_orders)
+    total_outstanding = _safe_sum_field(
+        "Sales Invoice", "outstanding_amount", filters={"docstatus": 1}
+    )
+    total_so = _safe_sum_field("Sales Order", "grand_total")
 
     return {
         "total_invoiced": total_invoiced,
         "total_outstanding": total_outstanding,
-        "submitted_invoice_count": len(submitted_invoices),
-        "draft_invoice_count": len(draft_invoices),
-        "sales_order_count": len(sales_orders),
+        "submitted_invoice_count": submitted_invoice_count,
+        "draft_invoice_count": draft_invoice_count,
+        "sales_order_count": sales_order_count,
         "total_sales_order_value": total_so,
     }, warnings
 
