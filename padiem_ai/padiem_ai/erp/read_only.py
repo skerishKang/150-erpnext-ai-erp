@@ -8,6 +8,7 @@ No external AI API calls. No credentials stored or referenced.
 """
 
 from .read_only_modules.utils import _count_records
+from .read_only_modules.constants import DEMO_COUNT_DOCTYPES
 from .read_only_modules.sales import (
     get_sales_summary,
     get_quotation_summary,
@@ -28,22 +29,8 @@ def get_demo_counts() -> dict:
     Returns:
         dict: DocType name -> record count
     """
-    doctypes = [
-        "Customer",
-        "Supplier",
-        "Item",
-        "Quotation",
-        "Sales Order",
-        "Purchase Order",
-        "Stock Entry",
-        "Delivery Note",
-        "Sales Invoice",
-        "Payment Entry",
-        "Warehouse",
-    ]
-
     counts = {}
-    for dt in doctypes:
+    for dt in DEMO_COUNT_DOCTYPES:
         counts[dt] = _count_records(dt)
 
     return counts

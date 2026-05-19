@@ -16,6 +16,7 @@ from .receivables import (
     get_payment_summary,
 )
 from .utils import _count_records
+from .constants import DEMO_COUNT_DOCTYPES
 
 
 def get_ceo_briefing_context() -> dict:
@@ -27,20 +28,7 @@ def get_ceo_briefing_context() -> dict:
     """
     all_warnings = []
 
-    doctypes = [
-        "Customer",
-        "Supplier",
-        "Item",
-        "Quotation",
-        "Sales Order",
-        "Purchase Order",
-        "Stock Entry",
-        "Delivery Note",
-        "Sales Invoice",
-        "Payment Entry",
-        "Warehouse",
-    ]
-    counts = {dt: _count_records(dt) for dt in doctypes}
+    counts = {dt: _count_records(dt) for dt in DEMO_COUNT_DOCTYPES}
 
     sales, w = get_sales_summary()
     all_warnings.extend(w)
