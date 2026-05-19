@@ -15,7 +15,7 @@ from .receivables import (
     get_receivables_summary,
     get_payment_summary,
 )
-from .utils import _count_records
+from .utils import _safe_count_records
 from .constants import DEMO_COUNT_DOCTYPES
 
 
@@ -28,7 +28,7 @@ def get_ceo_briefing_context() -> dict:
     """
     all_warnings = []
 
-    counts = {dt: _count_records(dt) for dt in DEMO_COUNT_DOCTYPES}
+    counts = {dt: _safe_count_records(dt) for dt in DEMO_COUNT_DOCTYPES}
 
     sales, w = get_sales_summary()
     all_warnings.extend(w)
