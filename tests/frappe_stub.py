@@ -30,9 +30,29 @@ def _whitelist(*args, **kwargs):
     return decorator
 
 
+def _is_frappe_stub(module) -> bool:
+    """Return True when an existing sys.modules entry looks like our stub."""
+    return (
+        getattr(module, "_padiem_test_stub", False) is True
+        and hasattr(module, "has_permission")
+        and hasattr(module, "whitelist")
+    )
+
+
 def install_frappe_stub():
-    """Install a minimal frappe module stub and return it."""
+    """Install a minimal frappe module stub and return it.
+
+    This helper is intentionally idempotent. Frappe-dependent app modules keep a
+    reference to the `frappe` module object they imported. Replacing
+    `sys.modules["frappe"]` during later test-module imports would split the
+    object identity and make mock call counts unreliable.
+    """
+    existing = sys.modules.get("frappe")
+    if existing is not None and _is_frappe_stub(existing):
+        return existing
+
     frappe = types.ModuleType("frappe")
+    frappe._padiem_test_stub = True
     frappe.PermissionError = FrappePermissionError
     frappe.has_permission = MagicMock(return_value=True)
     frappe.whitelist = _whitelist
