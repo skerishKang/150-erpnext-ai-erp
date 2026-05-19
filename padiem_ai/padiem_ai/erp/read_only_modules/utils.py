@@ -33,10 +33,35 @@ def _safe_count_records(doctype: str, filters: dict = None) -> int:
         int: Record count, or 0 on error
     """
     try:
-        return frappe.db.count(doctype, filters=filters)
+        count_fn = getattr(frappe.db, "count")
+    except AttributeError:
+        count_fn = None
+
+    if count_fn:
+        try:
+            return int(count_fn(doctype, filters=filters) or 0)
+        except TypeError:
+            # Older or test Frappe shims may not support the same count signature.
+            pass
+        except Exception:
+            frappe.log_error(
+                title=f"Read-only count failed: {doctype}",
+                message=frappe.get_traceback(),
+            )
+            return 0
+
+    try:
+        return len(
+            frappe.get_list(
+                doctype,
+                fields=["name"],
+                filters=filters,
+                limit_page_length=0,
+            )
+        )
     except Exception:
         frappe.log_error(
-            title=f"Read-only count failed: {doctype}",
+            title=f"Read-only count fallback failed: {doctype}",
             message=frappe.get_traceback(),
         )
         return 0
