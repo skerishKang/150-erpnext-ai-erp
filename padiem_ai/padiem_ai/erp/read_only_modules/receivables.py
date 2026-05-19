@@ -2,6 +2,10 @@
 
 Extracted from read_only.py as part of the receivables-domain split (Issue #56).
 Contains get_receivables_summary and get_payment_summary.
+
+Submitted-document policy:
+- Receivables are based on submitted Sales Invoice records only (`docstatus = 1`).
+- Payment totals are based on submitted Payment Entry records only (`docstatus = 1`).
 """
 
 from padiem_ai.erp.read_only_modules.utils import (
@@ -13,14 +17,14 @@ from padiem_ai.erp.read_only_modules.utils import (
 
 
 def get_receivables_summary() -> dict:
-    """Get receivables summary from Sales Invoice.
+    """Get receivables summary from submitted Sales Invoice records.
 
     Returns:
         tuple: (dict with receivables summary, list of warnings)
     """
     warnings = []
 
-    outstanding_filters = {"outstanding_amount": (">", 0)}
+    outstanding_filters = {"docstatus": 1, "outstanding_amount": (">", 0)}
 
     outstanding_invoice_count = _safe_count_records(
         "Sales Invoice",
@@ -51,19 +55,24 @@ def get_receivables_summary() -> dict:
 
 
 def get_payment_summary() -> dict:
-    """Get payment entry summary.
+    """Get payment entry summary from submitted Payment Entry records.
 
     Returns:
         tuple: (dict with payment summary, list of warnings)
     """
     warnings = []
 
-    payment_count = _safe_count_records("Payment Entry")
+    submitted_payment_filters = {"docstatus": 1}
+    payment_count = _safe_count_records("Payment Entry", filters=submitted_payment_filters)
     total_received = _safe_sum_field(
-        "Payment Entry", "paid_amount", filters={"payment_type": "Receive"}
+        "Payment Entry",
+        "paid_amount",
+        filters={"docstatus": 1, "payment_type": "Receive"},
     )
     total_paid = _safe_sum_field(
-        "Payment Entry", "paid_amount", filters={"payment_type": "Pay"}
+        "Payment Entry",
+        "paid_amount",
+        filters={"docstatus": 1, "payment_type": "Pay"},
     )
 
     return {

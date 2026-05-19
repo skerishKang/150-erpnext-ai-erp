@@ -2,6 +2,12 @@
 
 Extracted from read_only.py as part of the sales-domain split (Issue #50).
 Contains get_sales_summary, get_quotation_summary, and get_delivery_summary.
+
+Record policy:
+- Sales Invoice totals use submitted invoices (`docstatus = 1`).
+- Draft invoice count intentionally reports draft invoices (`docstatus = 0`).
+- Sales Order, Quotation, and Delivery Note counts/totals remain all-record
+  summaries until a runtime/product decision narrows them to submitted records.
 """
 
 from padiem_ai.erp.read_only_modules.utils import (
