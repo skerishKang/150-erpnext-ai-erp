@@ -15,6 +15,10 @@ def _safe_count_records(doctype: str, filters: dict = None) -> int:
     Falls back to frappe.get_list with limit_page_length=0 if
     frappe.db.count is unavailable.
 
+    Permission note: this aggregate helper must not be relied on as the
+    permission boundary. Callers should enforce endpoint-level permissions for
+    the requested DocType before exposing aggregate results.
+
     Args:
         doctype: DocType name
         filters: Optional filter dict
@@ -63,6 +67,10 @@ def _safe_sum_field(doctype: str, field: str, filters: dict = None) -> float:
     Uses frappe.db.get_value with aggregate function for efficiency.
     Does not fetch detail records.
 
+    Permission note: this aggregate helper must not be relied on as the
+    permission boundary. Callers should enforce endpoint-level permissions for
+    the requested DocType before exposing aggregate results.
+
     Args:
         doctype: DocType name
         field: Numeric field to sum (e.g., "grand_total")
@@ -97,6 +105,10 @@ def _safe_get_list_limited(
 
     Unlike the unbounded version, this helper bounds
     the result set to prevent unbounded queries in list-heavy contexts.
+
+    Permission note: this helper uses frappe.get_list(), which is the
+    permission-aware list path for detail records. Endpoint-level DocType gates
+    are still required before exposing broader briefing context.
 
     Args:
         doctype: DocType name
