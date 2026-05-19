@@ -41,11 +41,14 @@ This repository hosts `padiem_ai` — an AI ERP project built on ERPNext/Frappe.
 - `erp/` — ERP read-only data access
 - `www/` — Web controllers and entry points
 
+## Completed Refactoring
+
+- **`erp/read_only.py`** → domain modules + facade (completed). `read_only.py` is now a thin facade; domain logic is in `read_only_modules/`.
+
 ## Refactoring Candidates
 
-1. `erp/read_only.py` → domain modules + facade
-2. `ai/providers.py` → provider-specific modules + facade
-3. `ai/config.py` → env/config-status/guard separation
+1. `ai/providers.py` → provider-specific modules + facade
+2. `ai/config.py` → env/config-status/guard separation
 
 ## External Reference
 
