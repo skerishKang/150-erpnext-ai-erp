@@ -6,6 +6,15 @@ Repository structure for Padiem AI ERP.
 150-erpnext-ai-erp/
 ├── AGENTS.md                    # Agent index (entry point for AI agents)
 ├── README.md                    # Project overview
+├── padiem_ai/                   # ERPNext app/runtime code
+│   └── padiem_ai/
+│       ├── ai/                  # AI provider layer and config guards
+│       ├── api/                 # API endpoint wrappers
+│       ├── briefing/            # CEO briefing generation logic
+│       ├── dashboard/           # ERP dashboard page
+│       ├── erp/                 # ERP read-only data access
+│       ├── www/                 # Web controllers and entry points
+│       └── ...                  # Audit, data, page, prompts, public
 ├── docs/
 │   ├── agents/                  # Agent instruction system
 │   │   ├── README.md            # How agent docs work
