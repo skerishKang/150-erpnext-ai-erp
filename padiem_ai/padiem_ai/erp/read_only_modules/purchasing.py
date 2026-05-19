@@ -2,6 +2,10 @@
 
 Extracted from read_only.py as part of the purchasing-domain split (Issue #54).
 Contains get_purchase_summary.
+
+Record policy:
+- Purchase Order count and total remain all-record summaries until a
+  runtime/product decision narrows them to submitted records.
 """
 
 from padiem_ai.erp.read_only_modules.utils import (
