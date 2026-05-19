@@ -4,7 +4,11 @@ Extracted from read_only.py as part of the receivables-domain split (Issue #56).
 Contains get_receivables_summary and get_payment_summary.
 """
 
-from padiem_ai.erp.read_only_modules.utils import _safe_get_list
+from padiem_ai.erp.read_only_modules.utils import (
+    _safe_count_records,
+    _safe_get_list,
+    _safe_sum_field,
+)
 
 
 def get_receivables_summary() -> dict:
@@ -40,18 +44,16 @@ def get_payment_summary() -> dict:
     """
     warnings = []
 
-    payments, err = _safe_get_list(
-        "Payment Entry",
-        fields=["name", "party", "paid_amount", "posting_date", "payment_type"],
+    payment_count = _safe_count_records("Payment Entry")
+    total_received = _safe_sum_field(
+        "Payment Entry", "paid_amount", filters={"payment_type": "Receive"}
     )
-    if err:
-        warnings.append(err)
-
-    total_received = sum(p.get("paid_amount", 0) for p in payments if p.get("payment_type") == "Receive")
-    total_paid = sum(p.get("paid_amount", 0) for p in payments if p.get("payment_type") == "Pay")
+    total_paid = _safe_sum_field(
+        "Payment Entry", "paid_amount", filters={"payment_type": "Pay"}
+    )
 
     return {
-        "payment_count": len(payments),
+        "payment_count": payment_count,
         "total_received": total_received,
         "total_paid": total_paid,
     }, warnings
