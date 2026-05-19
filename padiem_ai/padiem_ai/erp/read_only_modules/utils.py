@@ -15,8 +15,9 @@ def _safe_count_records(doctype: str, filters: dict = None) -> int:
     Falls back to frappe.get_list with limit_page_length=0 if
     frappe.db.count is unavailable.
 
-    Permission note: frappe.db.count() is NOT permission-aware — it bypasses
-    ERPNext's row-level permission system. Use endpoint-level permission gates.
+    Permission note: this aggregate helper must not be relied on as the
+    permission boundary. Callers should enforce endpoint-level permissions for
+    the requested DocType before exposing aggregate results.
 
     Args:
         doctype: DocType name
@@ -66,8 +67,9 @@ def _safe_sum_field(doctype: str, field: str, filters: dict = None) -> float:
     Uses frappe.db.get_value with aggregate function for efficiency.
     Does not fetch detail records.
 
-    Permission note: frappe.db.get_value() is NOT permission-aware — it bypasses
-    ERPNext's row-level permission system. Use endpoint-level permission gates.
+    Permission note: this aggregate helper must not be relied on as the
+    permission boundary. Callers should enforce endpoint-level permissions for
+    the requested DocType before exposing aggregate results.
 
     Args:
         doctype: DocType name
@@ -104,9 +106,9 @@ def _safe_get_list_limited(
     Unlike the unbounded version, this helper bounds
     the result set to prevent unbounded queries in list-heavy contexts.
 
-    Permission note: frappe.get_list() IS permission-aware — it respects
-    ERPNext's row-level permission system and only returns records the
-    current user can read.
+    Permission note: this helper uses frappe.get_list(), which is the
+    permission-aware list path for detail records. Endpoint-level DocType gates
+    are still required before exposing broader briefing context.
 
     Args:
         doctype: DocType name
