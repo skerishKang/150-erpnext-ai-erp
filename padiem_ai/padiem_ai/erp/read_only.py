@@ -1,8 +1,14 @@
 """Read-only ERP data access layer.
 
 Provides structured summary data from ERPNext for CEO briefing and other features.
-Uses frappe.get_all / frappe.get_list only. No inserts, updates, or deletes.
-Respects ERPNext permissions.
+Uses frappe.get_list, frappe.db.count, and frappe.db.get_value.
+
+Permission note:
+- frappe.get_list() (used in _safe_get_list_limited) is permission-aware.
+- frappe.db.count() and frappe.db.get_value(..., fieldname="sum(...)") (used in
+  _safe_count_records and _safe_sum_field) are NOT permission-aware; they bypass
+  ERPNext's row-level permission system. Callers must gate access at the endpoint
+  level via frappe.has_permission() on each DocType.
 
 No external AI API calls. No credentials stored or referenced.
 """

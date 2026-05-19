@@ -17,3 +17,5 @@ DEMO_COUNT_DOCTYPES = (
     "Payment Entry",
     "Warehouse",
 )
+
+CEO_BRIEFING_READ_DOCTYPES = DEMO_COUNT_DOCTYPES

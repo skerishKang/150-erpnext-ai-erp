@@ -15,11 +15,17 @@ from padiem_ai.ai.config import (
 from padiem_ai.ai.registry import get_provider
 from padiem_ai.briefing.mock_generator import generate_mock_ceo_briefing
 from padiem_ai.erp.read_only import get_ceo_briefing_context, get_demo_counts
+from padiem_ai.erp.read_only_modules.constants import CEO_BRIEFING_READ_DOCTYPES
 
 
 def _require_ceo_briefing_read_permission():
-    """Check that the current user has read permission on Sales Invoice."""
-    frappe.has_permission("Sales Invoice", "read", throw=True)
+    """Check that the current user has read permission on all CEO briefing DocTypes.
+
+    Verifies read access to every ERP DocType included in the briefing context.
+    An exception is raised for the first DocType the user cannot read.
+    """
+    for doctype in CEO_BRIEFING_READ_DOCTYPES:
+        frappe.has_permission(doctype, "read", throw=True)
 
 
 @frappe.whitelist()
@@ -27,7 +33,7 @@ def get_ceo_briefing():
     """CEO Daily Briefing API endpoint.
 
     Flow:
-    1. Require Sales Invoice read permission
+    1. Require read permission on all CEO briefing DocTypes
     2. Read ERP context
     3. Generate deterministic briefing
     4. Get selected provider name from config
@@ -85,7 +91,7 @@ def get_counts():
     """Get demo data counts.
 
     Returns record counts for all demo DocTypes.
-    Read-only access. Permission check required.
+    Read-only access. Permission check covers all briefing DocTypes.
     """
     _require_ceo_briefing_read_permission()
 
