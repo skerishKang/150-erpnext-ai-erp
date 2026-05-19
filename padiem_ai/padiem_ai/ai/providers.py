@@ -126,12 +126,28 @@ class DeepSeekProvider(BaseAIProvider):
         except (KeyError, IndexError, TypeError):
             return ""
 
+    def _serialize_context(self, context: dict) -> str:
+        """Serialize context predictably for prompt construction."""
+        if not context:
+            return ""
+
+        import json
+        try:
+            return json.dumps(context, ensure_ascii=False, sort_keys=True, default=str)
+        except (TypeError, ValueError):
+            return str(context)
+
+    def _build_prompt_with_context(self, prompt: str, context: dict) -> str:
+        """Build a prompt that explicitly includes context when supplied."""
+        context_text = self._serialize_context(context)
+        if not context_text:
+            return prompt
+        return f"{prompt}\n\nContext:\n{context_text}"
+
     def _build_summary_prompt(self, context: dict, prompt_template: str = "") -> str:
         """Build a summary prompt that always includes the supplied context."""
-        context_text = str(context)
-        if prompt_template:
-            return f"{prompt_template}\n\nContext:\n{context_text}"
-        return context_text
+        base_prompt = prompt_template or "Summarize the supplied context."
+        return self._build_prompt_with_context(base_prompt, context)
 
     def generate_text(self, prompt: str, context: dict, options: dict = None) -> str:
         """Generate text via DeepSeek. Blocked by config guard if not enabled."""
@@ -141,7 +157,8 @@ class DeepSeekProvider(BaseAIProvider):
         if not api_key:
             raise RuntimeError("DeepSeek API key not configured")
 
-        messages = [{"role": "user", "content": prompt}]
+        content = self._build_prompt_with_context(prompt, context)
+        messages = [{"role": "user", "content": content}]
         payload = self._build_chat_payload(messages, cfg["model"], options)
         response = self._call_deepseek_chat(payload, api_key, cfg["base_url"])
         return self._extract_text(response)
@@ -154,7 +171,8 @@ class DeepSeekProvider(BaseAIProvider):
         if not api_key:
             raise RuntimeError("DeepSeek API key not configured")
 
-        messages = [{"role": "user", "content": prompt}]
+        content = self._build_prompt_with_context(prompt, context)
+        messages = [{"role": "user", "content": content}]
         payload = self._build_chat_payload(messages, cfg["model"], options)
         response = self._call_deepseek_chat(payload, api_key, cfg["base_url"])
         text = self._extract_text(response)
@@ -167,7 +185,7 @@ class DeepSeekProvider(BaseAIProvider):
     def summarize(self, context: dict, prompt_template: str = "") -> str:
         """Summarize context via DeepSeek. Blocked by config guard if not enabled."""
         prompt = self._build_summary_prompt(context, prompt_template)
-        return self.generate_text(prompt, context)
+        return self.generate_text(prompt, {})
 
     def health_check(self) -> dict:
         """Check DeepSeek provider status without making an external API call."""
