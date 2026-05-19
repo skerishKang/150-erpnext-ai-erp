@@ -6,6 +6,8 @@ Provides helper functions for safe ERPNext data access.
 
 import frappe
 
+DEFAULT_READ_ONLY_LIMIT = 100
+
 
 def _count_records(doctype: str) -> int:
     """Count records using frappe.get_list (not frappe.db.count).
@@ -118,6 +120,53 @@ def _safe_get_list(doctype: str, fields: list = None, filters: dict = None) -> t
     except Exception as exc:
         frappe.log_error(
             title=f"Read-only ERP query failed: {doctype}",
+            message=frappe.get_traceback(),
+        )
+        return [], f"{doctype} 데이터를 불러오지 못했습니다"
+
+
+def _safe_get_list_limited(
+    doctype: str,
+    fields: list = None,
+    filters: dict = None,
+    limit: int = DEFAULT_READ_ONLY_LIMIT,
+    order_by: str = None,
+) -> tuple:
+    """Safe bounded wrapper around frappe.get_list with a default limit.
+
+    Unlike _safe_get_list() which returns all records, this helper bounds
+    the result set to prevent unbounded queries in list-heavy contexts.
+
+    Args:
+        doctype: DocType name
+        fields: Fields to fetch. Defaults to ["name"].
+        filters: Filters to apply. Passed as-is.
+        limit: Max records. Falls back to DEFAULT_READ_ONLY_LIMIT if None,
+            zero, negative, or non-integer.
+        order_by: Optional ORDER BY clause (e.g. "modified desc").
+            Only passed to frappe.get_list when provided.
+
+    Returns:
+        tuple: (results_list, error_message_or_None)
+    """
+    if not isinstance(limit, int) or limit <= 0:
+        limit = DEFAULT_READ_ONLY_LIMIT
+
+    try:
+        kwargs = {
+            "doctype": doctype,
+            "fields": fields or ["name"],
+            "filters": filters,
+            "limit_page_length": limit,
+        }
+        if order_by:
+            kwargs["order_by"] = order_by
+
+        results = frappe.get_list(**kwargs)
+        return results, None
+    except Exception:
+        frappe.log_error(
+            title=f"Read-only bounded query failed: {doctype}",
             message=frappe.get_traceback(),
         )
         return [], f"{doctype} 데이터를 불러오지 못했습니다"
