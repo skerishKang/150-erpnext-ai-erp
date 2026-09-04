@@ -2,19 +2,30 @@
 
 ERPNext-based AI ERP for Korean SMEs.
 
-> **Current status: early ERPNext app/runtime MVP — not production-ready**
+> **Business status: ACTIVE / INCUBATION — PADIEM portfolio `10. Padiem AI ERP`**
 >
-> The repository contains a read-only ERP summary layer, deterministic CEO briefing, AI provider abstraction, a disabled-by-default DeepSeek implementation, a minimal `/ceo_briefing` route, unit tests, and static validation. A real Frappe/ERPNext bench and site runtime smoke has not yet been completed.
+> **Product stage: EARLY MVP → OPERATIONS-READY**
+>
+> **Production status: NOT YET — early ERPNext app/runtime MVP, not production-ready**
+>
+> The repository contains a read-only ERP summary layer, deterministic CEO briefing, AI provider abstraction, a disabled-by-default DeepSeek implementation, a minimal `/ceo_briefing` route, unit tests, and static validation. A real Frappe/ERPNext bench and site runtime smoke has not yet been completed. Business promotion does not imply production readiness.
 
 ## Product Identity
 
 Padiem AI ERP is an ERP product built on ERPNext. AI is embedded inside ERP workflows; it is not a generic chatbot, automation platform, or autonomous ERP operator.
 
+- **Portfolio:** `10. Padiem AI ERP`
+- **Business status:** `ACTIVE / INCUBATION`
+- **Product stage:** `EARLY MVP → OPERATIONS-READY`
+- **Production status:** `NOT YET`
 - **Product:** Padiem AI ERP
 - **Base:** ERPNext / Frappe
 - **Target:** Korean SMEs with approximately 5–100 employees
 - **Initial focus:** quotation, inventory, delivery, receivables, and executive reporting
 - **Current implemented slice:** read-only CEO briefing
+- **Business promotion authority:** [#147](../../issues/147)
+
+See [Business Charter](docs/product/BUSINESS_CHARTER.md) for the product boundary, PADIEM portfolio position, commercialization thesis, and operations-readiness priority.
 
 ## Product Principles
 
@@ -162,6 +173,10 @@ After validation, this section must include exact commands for:
 
 ## Improvement Program
 
+### Business and portfolio authority
+
+- [#147 — Padiem AI ERP business promotion and portfolio boundary](../../issues/147)
+
 ### Existing runtime foundation
 
 - [#131 — provision Frappe bench environment](../../issues/131)
@@ -211,6 +226,7 @@ After validation, this section must include exact commands for:
 
 ## Key Documentation
 
+- [Business Charter](docs/product/BUSINESS_CHARTER.md)
 - [Project Audit — 2026-08-04](docs/PROJECT_AUDIT_20260804.md)
 - [Target Architecture](docs/architecture/TARGET_ARCHITECTURE.md)
 - [AI and ERP Data Governance](docs/product/AI_DATA_GOVERNANCE.md)
